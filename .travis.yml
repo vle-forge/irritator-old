@@ -1,0 +1,105 @@
+language: cpp
+
+sudo: false
+
+os:
+  - linux
+  - osx
+
+branches:
+  only:
+    - master
+    - test
+
+addons:
+  apt:
+    packages: &common_packages
+      - cmake
+
+env:
+  matrix:
+    - BOGUS_JOB=true
+
+matrix:
+  exclude:
+    - env: BOGUS_JOB=true
+
+  include:
+    - os: linux
+      dist: trusty
+      env: CXX_COMPILER=g++-7 CXXSTD=c++17
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - *common_packages
+            - g++-7
+    - os: linux
+      dist: trusty
+      env: CXX_COMPILER=g++-8 CXXSTD=c++17
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - *common_packages
+            - g++-8
+    - os: linux
+      env: CXX_COMPILER=clang++-5.0 CXXSTD=c++17
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-trusty-5.0
+          packages:
+            - *common_packages
+            - clang-5.0
+            - g++-7
+    - os: linux
+      env: CXX_COMPILER=clang++-6.0 CXXSTD=c++17
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-trusty-6.0
+          packages:
+            - *common_packages
+            - clang-6.0
+            - g++-7
+    - os: linux
+      env: CXX_COMPILER=clang++-7 CXXSTD=c++17
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-trusty-7
+          packages:
+            - *common_packages
+            - clang-7
+            - g++-7
+    # osx is disabled. We are waiting for a 10.14:
+    # /benchmark.cpp:607:12:
+    # error: call to unavailable function 'visit': introduced in macOS 10.14
+    #
+    # - os: osx
+    #   osx_image: xcode10.1
+    #   env: CXX_COMPILER=clang++ CXXSTD=c++17
+
+install:
+  - cd ..
+  - cd irritator
+  - mkdir build
+  - cd build
+  - CXXFLAGS="-O3 -std=$CXXSTD" cmake -DCMAKE_CXX_COMPILER=$CXX_COMPILER -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_COLOR_MAKEFILE=OFF -DCMAKE_VERBOSE_MAKEFILE=ON ..
+
+script:
+  - make
+  - sudo make install
+  - ctest -V -R testio
+  - ctest -V -R testlib
+  - ctest -V -R testsolver
+
+notifications:
+  email:
+    on_sucess: always
