@@ -8,11 +8,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 # https://cmake.org/cmake/help/v3.0/module/GNUInstallDirs.html
 include(GNUInstallDirs)
 
-# set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 find_package(glfw3 REQUIRED)
-if (NOT glfw3_FOUND)
-message(STATUS "found")
-endif ()
 
 find_package(Threads REQUIRED)
 add_library(threads INTERFACE IMPORTED)

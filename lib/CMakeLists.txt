@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
-project(libirritator LANGUAGES CXX)
+project(libirritator VERSION 0.1.0 LANGUAGES CXX C)
 
 option(WITH_FULL_OPTIMIZATION "Disable all logging facilities and active heavy optimization code. [default: off]" OFF)
 option(WITH_DEBUG "enable maximium debug code. [default: ON]" ON)

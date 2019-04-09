@@ -1,3 +1,6 @@
+cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
+project(irritator VERSION 0.1.0 LANGUAGES CXX C)
+
 set(main_sources
   src/main.cpp
   # src/glvle.hpp
@@ -8,23 +11,23 @@ set(main_sources
   # src/package_window.cpp
   # src/text_window.cpp
   # src/vpz_window.cpp
-  ${PROJECT_SOURCE_DIR}/external/imgui/imgui.cpp
-  ${PROJECT_SOURCE_DIR}/external/imgui/imgui.h
-  ${PROJECT_SOURCE_DIR}/external/imgui/imgui_demo.cpp
-  ${PROJECT_SOURCE_DIR}/external/imgui/imgui_draw.cpp
-  ${PROJECT_SOURCE_DIR}/external/imgui/imgui_widgets.cpp
-  ${PROJECT_SOURCE_DIR}/external/imgui/imgui_internal.h
-  ${PROJECT_SOURCE_DIR}/external/imgui/imconfig.h
-  ${PROJECT_SOURCE_DIR}/external/imgui/imstb_rectpack.h
-  ${PROJECT_SOURCE_DIR}/external/imgui/imstb_textedit.h
-  ${PROJECT_SOURCE_DIR}/external/imgui/imstb_truetype.h
-  ${PROJECT_SOURCE_DIR}/external/imgui/examples/imgui_impl_glfw.cpp
-  ${PROJECT_SOURCE_DIR}/external/imgui/examples/imgui_impl_glfw.h
-  ${PROJECT_SOURCE_DIR}/external/imgui/examples/imgui_impl_opengl3.cpp
-  ${PROJECT_SOURCE_DIR}/external/imgui/examples/imgui_impl_opengl3.h
-  ${PROJECT_SOURCE_DIR}/external/imgui/examples/libs/gl3w/GL/gl3w.c
-  ${PROJECT_SOURCE_DIR}/external/imgui/examples/libs/gl3w/GL/gl3w.h
-  ${PROJECT_SOURCE_DIR}/external/imgui/examples/libs/gl3w/GL/glcorearb.h)
+  ${PROJECT_SOURCE_DIR}/../external/imgui/imgui.cpp
+  ${PROJECT_SOURCE_DIR}/../external/imgui/imgui.h
+  ${PROJECT_SOURCE_DIR}/../external/imgui/imgui_demo.cpp
+  ${PROJECT_SOURCE_DIR}/../external/imgui/imgui_draw.cpp
+  ${PROJECT_SOURCE_DIR}/../external/imgui/imgui_widgets.cpp
+  ${PROJECT_SOURCE_DIR}/../external/imgui/imgui_internal.h
+  ${PROJECT_SOURCE_DIR}/../external/imgui/imconfig.h
+  ${PROJECT_SOURCE_DIR}/../external/imgui/imstb_rectpack.h
+  ${PROJECT_SOURCE_DIR}/../external/imgui/imstb_textedit.h
+  ${PROJECT_SOURCE_DIR}/../external/imgui/imstb_truetype.h
+  ${PROJECT_SOURCE_DIR}/../external/imgui/examples/imgui_impl_glfw.cpp
+  ${PROJECT_SOURCE_DIR}/../external/imgui/examples/imgui_impl_glfw.h
+  ${PROJECT_SOURCE_DIR}/../external/imgui/examples/imgui_impl_opengl3.cpp
+  ${PROJECT_SOURCE_DIR}/../external/imgui/examples/imgui_impl_opengl3.h
+  ${PROJECT_SOURCE_DIR}/../external/imgui/examples/libs/gl3w/GL/gl3w.c
+  ${PROJECT_SOURCE_DIR}/../external/imgui/examples/libs/gl3w/GL/gl3w.h
+  ${PROJECT_SOURCE_DIR}/../external/imgui/examples/libs/gl3w/GL/glcorearb.h)
 
 add_executable(app ${main_sources})
 
@@ -35,9 +38,9 @@ target_include_directories(app
   $<INSTALL_INTERFACE:include>
   PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${PROJECT_SOURCE_DIR}/external/imgui
-  ${PROJECT_SOURCE_DIR}/external/imgui/examples
-  ${PROJECT_SOURCE_DIR}/external/imgui/examples/libs/gl3w)
+  ${PROJECT_SOURCE_DIR}/../external/imgui
+  ${PROJECT_SOURCE_DIR}/../external/imgui/examples
+  ${PROJECT_SOURCE_DIR}/../external/imgui/examples/libs/gl3w)
 
 target_link_libraries(app
   PRIVATE
@@ -46,8 +49,7 @@ target_link_libraries(app
   $<$<PLATFORM_ID:Linux>:dl>
   GL
   glfw
-  libirritator
-  ) # or c++fs
+  libirritator)
 
 target_compile_definitions(app
   PRIVATE
