@@ -38,22 +38,6 @@ static const fmt::text_style irr_message_style[] = {
     (fmt::fg(fmt::terminal_color::blue))                       // debug
 };
 
-Context::Context(int verbose_level)
-  : cfile_logger(stdout)
-{
-    if (verbose_level != 6)
-        log_priority = static_cast<Context::message_type>(
-          verbose_level < 0 ? 0 : verbose_level > 7 ? 7 : verbose_level);
-}
-
-Context::Context(FILE* f, int verbose_level)
-  : cfile_logger(f ? f : stdout)
-{
-    if (verbose_level != 6)
-        log_priority = static_cast<Context::message_type>(
-          verbose_level < 0 ? 0 : verbose_level > 7 ? 7 : verbose_level);
-}
-
 inline bool
 is_loggable(Context::message_type current_level,
             Context::message_type level) noexcept

@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(irritator VERSION 0.1.0 LANGUAGES CXX C)
 
 set(main_sources
-  src/main.cpp
   # src/glvle.hpp
   # src/glvle.cpp
   # src/menubar.cpp
@@ -20,14 +19,26 @@ set(main_sources
   ${PROJECT_SOURCE_DIR}/../external/imgui/imconfig.h
   ${PROJECT_SOURCE_DIR}/../external/imgui/imstb_rectpack.h
   ${PROJECT_SOURCE_DIR}/../external/imgui/imstb_textedit.h
-  ${PROJECT_SOURCE_DIR}/../external/imgui/imstb_truetype.h
-  ${PROJECT_SOURCE_DIR}/../external/imgui/examples/imgui_impl_glfw.cpp
-  ${PROJECT_SOURCE_DIR}/../external/imgui/examples/imgui_impl_glfw.h
-  ${PROJECT_SOURCE_DIR}/../external/imgui/examples/imgui_impl_opengl3.cpp
-  ${PROJECT_SOURCE_DIR}/../external/imgui/examples/imgui_impl_opengl3.h
-  ${PROJECT_SOURCE_DIR}/../external/imgui/examples/libs/gl3w/GL/gl3w.c
-  ${PROJECT_SOURCE_DIR}/../external/imgui/examples/libs/gl3w/GL/gl3w.h
-  ${PROJECT_SOURCE_DIR}/../external/imgui/examples/libs/gl3w/GL/glcorearb.h)
+  ${PROJECT_SOURCE_DIR}/../external/imgui/imstb_truetype.h)
+
+if (WIN32)
+	list(APPEND main_sources
+		src/main-windows.cpp
+		${PROJECT_SOURCE_DIR}/../external/imgui/examples/imgui_impl_win32.cpp
+		${PROJECT_SOURCE_DIR}/../external/imgui/examples/imgui_impl_win32.h
+		${PROJECT_SOURCE_DIR}/../external/imgui/examples/imgui_impl_dx12.h
+		${PROJECT_SOURCE_DIR}/../external/imgui/examples/imgui_impl_dx12.cpp)
+else ()
+	find_package(glfw3 REQUIRED)
+	list(APPEND main_sources src/main-unix.cpp
+		${PROJECT_SOURCE_DIR}/../external/imgui/examples/imgui_impl_glfw.cpp
+		${PROJECT_SOURCE_DIR}/../external/imgui/examples/imgui_impl_glfw.h
+		${PROJECT_SOURCE_DIR}/../external/imgui/examples/imgui_impl_opengl3.cpp
+		${PROJECT_SOURCE_DIR}/../external/imgui/examples/imgui_impl_opengl3.h
+		${PROJECT_SOURCE_DIR}/../external/imgui/examples/libs/gl3w/GL/gl3w.c
+		${PROJECT_SOURCE_DIR}/../external/imgui/examples/libs/gl3w/GL/gl3w.h
+		${PROJECT_SOURCE_DIR}/../external/imgui/examples/libs/gl3w/GL/glcorearb.h)
+endif ()
 
 add_executable(app ${main_sources})
 
@@ -44,11 +55,16 @@ target_include_directories(app
 
 target_link_libraries(app
   PRIVATE
-  stdc++fs
+  $<$<CXX_COMPILER_ID:GNU>:stdc++fs>
+  $<$<CXX_COMPILER_ID:Clang>:c++fs>
   threads
   $<$<PLATFORM_ID:Linux>:dl>
-  GL
-  glfw
+  $<$<PLATFORM_ID:Linux>:GL>
+  $<$<PLATFORM_ID:Linux>:glfw>
+  $<$<PLATFORM_ID:Windows>:d3d12>
+  $<$<PLATFORM_ID:Windows>:dxguid>
+  $<$<PLATFORM_ID:Windows>:dxgi>
+  $<$<PLATFORM_ID:Windows>:d3dcompiler>
   libirritator)
 
 target_compile_definitions(app
