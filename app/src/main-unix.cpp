@@ -60,6 +60,8 @@
 #pragma comment(lib, "legacy_stdio_definitions")
 #endif
 
+#include "irritator.hpp"
+
 static void
 glfw_error_callback(int error, const char* description)
 {
@@ -72,186 +74,13 @@ glfw_error_callback(int error, const char* description)
       description);
 }
 
-enum class gv_error_type
-{
-    success,
-    help,
-    short_argument_error,
-    long_argument_error,
-    open_package_error
-};
-
-struct command_line_status
-{
-    command_line_status(gv_error_type status_)
-      : status(status_)
-    {}
-
-    command_line_status(char* package_, int optind_)
-      : package(package_)
-      , optind(optind_)
-    {}
-
-    char* package = nullptr;
-    int optind = -1;
-    gv_error_type status = gv_error_type::success;
-};
-
-// Parse command line option
-// glvle [options...] [vpz files...]
-// - [--help][-h]           show help message.
-// - `-P[ ]str`             short option to open a package.
-// - --package[:|=]str]     long option to open a package.
-// - [vpz files...]         list of vpz file to open after in the package.
-//
-// Use the package option to open a package directly when starting glvle.
-static command_line_status
-parse_argument(int argc, char* argv[])
-{
-    const auto* short_package = "-P";
-    const auto* long_package = "--package";
-    const auto short_package_sz = std::strlen(short_package);
-    const auto long_package_sz = std::strlen(long_package);
-    char* package = nullptr;
-    int optind = argc;
-    int i = 1;
-
-    while (i < optind) {
-        const auto len = strlen(argv[i]);
-
-        if (!std::strncmp(argv[i], short_package, short_package_sz)) {
-            if (len > short_package_sz) {
-                package = argv[i] + short_package_sz;
-            } else {
-                if (i + 1 < argc) {
-                    ++i;
-                    package = argv[i];
-                } else {
-                    return command_line_status(
-                      gv_error_type::short_argument_error);
-                }
-            }
-        } else if (!std::strncmp(argv[i], long_package, long_package_sz)) {
-            if (len > long_package_sz && (argv[i][long_package_sz] == '=' ||
-                                          argv[i][long_package_sz] == ':')) {
-                package = argv[i] + long_package_sz;
-            } else {
-                if (i + 1 < argc) {
-                    ++i;
-                    package = argv[i];
-                } else {
-                    return command_line_status(
-                      gv_error_type::long_argument_error);
-                }
-            }
-        } else if (!std::strcmp(argv[i], "-h") ||
-                   !std::strcmp(argv[i], "--help")) {
-            return command_line_status(gv_error_type::help);
-        } else {
-            --optind;
-            if (i < optind) {
-                auto* ptr = argv[i];
-                argv[i] = argv[optind];
-                argv[optind] = ptr;
-            }
-        }
-
-        ++i;
-    }
-
-    return command_line_status(package, optind);
-}
-
 int
 main(int argc, char* argv[])
 {
-    // vle::glvle::Glvle gv;
+    irr::irritator main_window;
 
-    auto args = parse_argument(argc, argv);
-    if (args.status == gv_error_type::success) {
-        if (args.package) {
-            // try {
-            //     gv.open(".", args.package, false);
-            //     printf("Package: %s open\n", args.package);
-            // } catch (const std::exception& e) {
-            //     fprintf(stderr,
-            //             "Fail to open package %s: %s\n",
-            //             args.package,
-            //             e.what());
-            //     args.status = gv_error_type::open_package_error;
-            // }
-        }
-    }
-
-    switch (args.status) {
-    case gv_error_type::success:
-        break;
-    case gv_error_type::help:
-        puts("glvle [options...] [vpz files...]\n\n"
-             "Options:\n"
-             " --help|-h              show this help message.\n"
-             " -P[ ]str               short option to open a package.\n"
-             " --package[:|=]str]     long option to open a package.\n"
-             " [vpz files...]         list of vpz file to open after in the "
-             "package.\n");
-        return 0;
-    case gv_error_type::short_argument_error:
-        fprintf(stderr, "Short argument error\n");
-        return 1;
-    case gv_error_type::long_argument_error:
-        fprintf(stderr, "Long argument error\n");
+    if (main_window.init(argc, argv))
         return 2;
-    case gv_error_type::open_package_error:
-        fprintf(stderr, "Fail to open package %s\n", args.package);
-        return 3;
-    };
-
-        // For all other argument in command line (from the args.optind index),
-        // search vpz files and try to open it in the experiment directory of
-        // the package
-#if 0
-    if (args.package) {
-        for (; args.optind != argc; ++args.optind) {
-            auto dot = rindex(argv[args.optind], '.');
-
-            if (dot) {
-                if (strcmp(dot, ".vpz") == 0) {
-                    auto p = vle::utils::Path(
-                      gv.package.package->getDir(vle::utils::PKG_SOURCE));
-                    p /= "exp";
-                    p /= argv[args.optind];
-
-                    if (p.exists()) {
-                        try {
-                            auto& vpz = gv.vpz_files[p.string()];
-                            vpz.id = std::string("vpz-") +
-                                     std::to_string(gv.package.id_generator++);
-                            vpz.open(p.string());
-                            printf("  file: %s open\n", p.string().c_str());
-                        } catch (const std::exception& e) {
-                            printf("  file: %s fail to open: %s\n",
-                                   p.string().c_str(),
-                                   e.what());
-                            gv.vpz_files.erase(p.string());
-                        }
-                    } else {
-                        fprintf(stderr,
-                                "File %s does not exist\n",
-                                p.string().c_str());
-                    }
-                } else {
-                    fprintf(stderr,
-                            "Can not open a non vpz file (%s)\n",
-                            argv[args.optind]);
-                }
-            } else {
-                fprintf(stderr,
-                        "Can not open a non vpz file (%s)\n",
-                        argv[args.optind]);
-            }
-        }
-    }
-#endif
 
     // Setup window
     glfwSetErrorCallback(glfw_error_callback);
@@ -364,43 +193,13 @@ main(int argc, char* argv[])
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-#if 0
-        show_app_menubar(gv);
-
-        if (gv.show_package_window)
-            gv.show_package_window = gv.package.show(gv);
-
-        if (gv.show_log_window)
-            gv.log_w.show(gv);
-
-        {
-            auto it = gv.txt_files.begin();
-
-            while (it != gv.txt_files.end()) {
-                if (!it->second.show())
-                    it = gv.txt_files.erase(it);
-                else
-                    ++it;
-            }
-        }
-
-        {
-            auto it = gv.vpz_files.begin();
-
-            while (it != gv.vpz_files.end()) {
-                if (!it->second.show())
-                    it = gv.vpz_files.erase(it);
-                else
-                    ++it;
-            }
-        }
-#endif
-
         // 1. Show the big demo window (Most of the sample code is in
         // ImGui::ShowDemoWindow()! You can browse its code to learn more about
         // Dear ImGui!).
         if (show_demo_window)
             ImGui::ShowDemoWindow(&show_demo_window);
+
+        main_window.show();
 
         // 2. Show a simple window that we create ourselves. We use a Begin/End
         // pair to created a named window.

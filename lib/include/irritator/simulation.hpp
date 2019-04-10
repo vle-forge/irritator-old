@@ -472,16 +472,16 @@ struct Vpz
     irr::data_array<vec2, ID> vec2_32;
     irr::data_array<vec3, ID> vec3_32;
 
-    irr::linker<ID, ID> value_links{ 4096 };
-    irr::linker<ID, ID> named_value_links{ 4096 };
-    irr::linker<ID, ID> model_dynamics{ 4096 };
-    irr::linker<ID, ID> model_parent{ 4096 };
-    irr::multi_linker<ID, ID> model_input_ports{ 4096 };
-    irr::multi_linker<ID, ID> model_output_ports{ 4096 };
-    irr::multi_linker<ID, ID2> model_connections{ 4096 };
-    irr::multi_linker<ID, ID> model_conditions{ 4096 };
-    irr::multi_linker<ID, ID> model_children{ 4096 };
-    irr::multi_linker<ID, ID> condition_named_values{ 4096 };
+    irr::linker<ID, ID> value_links;
+    irr::linker<ID, ID> named_value_links;
+    irr::linker<ID, ID> model_dynamics;
+    irr::linker<ID, ID> model_parent;
+    irr::multi_linker<ID, ID> model_input_ports;
+    irr::multi_linker<ID, ID> model_output_ports;
+    irr::multi_linker<ID, ID2> model_connections;
+    irr::multi_linker<ID, ID> model_conditions;
+    irr::multi_linker<ID, ID> model_children;
+    irr::multi_linker<ID, ID> condition_named_values;
 
     void init(int object_capacity, int list_capacity);
 

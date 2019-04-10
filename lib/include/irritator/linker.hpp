@@ -41,16 +41,13 @@ public:
     using value_type = typename container_type::value_type;
     using reference = typename container_type::reference;
 
-    linker(const size_t size)
-      : items(size, 0, Allocator())
-    {
-        assert(size > 0);
-    }
+    linker() = default;
 
-    linker(const size_t size, const Allocator& allocator)
-      : items(size, 0, allocator)
+    void init(int capacity)
     {
-        assert(size > 0);
+        assert(capacity > 0);
+
+        items.reserve(capacity);
     }
 
     void emplace(const identifier_type id,
@@ -300,32 +297,26 @@ private:
     };
 
 public:
-    multi_linker(const size_t size) noexcept
-      : map(size, 0, IdentifierAllocator())
-      , list(size, NodeAllocator())
-      , free_head(-1)
+    multi_linker() noexcept = default;
+
+    void init(int capacity)
     {
-        assert(size > 0);
+        assert(capacity > 0);
+
+        map.resize(capacity, 0);
 
         // The linked list starts at an empty state and grow automatically
         // except if at least one element is deleted before.
+        list.reserve(capacity);
 
-        list.clear();
+        free_head = -1;
     }
 
-    multi_linker(const size_t size,
-                 const IdentifierAllocator& id_allocator,
-                 const NodeAllocator& node_allocator) noexcept
-      : map(size, 0, id_allocator)
-      , list(size, node_allocator)
-      , free_head(-1)
+    void clear()
     {
-        assert(size > 0);
-
-        // The linked list starts at an empty state and grow automatically
-        // except if at least one element is deleted before.
-
+        std::fill(std::begin(map), std::end(map), 0);
         list.clear();
+        free_head = -1;
     }
 
     template<typename DataArray>
