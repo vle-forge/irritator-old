@@ -2,9 +2,11 @@ cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(irritator VERSION 0.1.0 LANGUAGES CXX C)
 
 set(main_sources
+  src/dialog.cpp
   src/irritator.hpp
   src/irritator.cpp
   src/log_window.cpp
+  src/menubar.cpp
   src/package.hpp
   src/package.cpp
 

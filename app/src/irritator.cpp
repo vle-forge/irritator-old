@@ -180,88 +180,10 @@ irritator::init(int argc, char* argv[])
     return 0;
 }
 
-static void
-show_menubar(irritator& irr)
-{
-    bool new_box = false;
-    bool open_box = false;
-    std::string path_name;
-    std::string dir_name;
-
-    if (ImGui::BeginMainMenuBar()) {
-        if (ImGui::BeginMenu("File")) {
-            // if (ImGui::MenuItem("New", "Ctrl+N"))
-            //     new_box = true;
-            // if (ImGui::MenuItem("Open", "Ctrl+O"))
-            //     open_box = true;
-            ImGui::MenuItem("New", "Ctrl+N");
-            ImGui::MenuItem("Open", "Ctrl+O");
-            ImGui::Separator();
-            // if (ImGui::MenuItem("Close", nullptr, gv.have_package))
-            //     gv.clear();
-
-            ImGui::Separator();
-            ImGui::MenuItem("Quit", "Ctrl+Q", false, false);
-            ImGui::EndMenu();
-        }
-
-        if (ImGui::BeginMenu("View")) {
-            Package::item* ptr = nullptr;
-            while (irr.package_windows.packages.next(ptr)) {
-                auto& top_node =
-                  irr.package_windows.hierarchy.get(ptr->top_id);
-                ImGui::MenuItem(
-                  "Package Window##ID", nullptr, &ptr->show_window, true);
-            }
-
-            ImGui::MenuItem(
-              "Log window", nullptr, &irr.log_window.show_window);
-
-            ImGui::EndMenu();
-        }
-
-        ImGui::EndMainMenuBar();
-    }
-
-    // if (new_box)
-    //     ImGui::OpenPopup("New package");
-
-    // if (open_box)
-    //     ImGui::OpenPopup("Open package");
-
-    // if (select_new_directory_dialog("New package",
-    //                                 "Select a new directory",
-    //                                 "/home/gquesnel/devel/bits",
-    //                                 path_name,
-    //                                 dir_name)) {
-    //     if (!path_name.empty() && !dir_name.empty()) {
-    //         try {
-    //             gv.open(path_name, dir_name, true);
-    //         } catch (const std::exception& e) {
-    //             printf("%s.\n", e.what());
-    //         }
-    //     }
-    // }
-
-    // if (select_directory_dialog("Open package",
-    //                             "Select a new directory",
-    //                             "/home/gquesnel/devel/bits",
-    //                             path_name,
-    //                             dir_name)) {
-    //     if (!dir_name.empty()) {
-    //         try {
-    //             gv.open(path_name, dir_name, false);
-    //         } catch (const std::exception& e) {
-    //             printf("%s.\n", e.what());
-    //         }
-    //     }
-    // }
-}
-
 void
 irritator::show()
 {
-    show_menubar(*this);
+    show_menubar();
 
     package_windows.show();
 

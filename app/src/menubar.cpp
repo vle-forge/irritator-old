@@ -1,69 +1,61 @@
-/*
- * This file is part of VLE, a framework for multi-modeling, simulation
- * and analysis of complex dynamical systems.
- * https://www.vle-project.org
- *
- * Copyright (c) 2003-2018 Gauthier Quesnel <gauthier.quesnel@inra.fr>
- * Copyright (c) 2003-2018 ULCO http://www.univ-littoral.fr
- * Copyright (c) 2007-2018 INRA http://www.inra.fr
- *
- * See the AUTHORS or Authors.txt file for copyright owners and
- * contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or (at
- * your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+// Copyright (c) 2019 INRA Distributed under the Boost Software License,
+// Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
+// http://www.boost.org/LICENSE_1_0.txt)
 
-#include "glvle.hpp"
+#include "irritator.hpp"
 
 #include <cstdio>
 
-#include "imgui.h"
-
-namespace vle {
-namespace glvle {
+namespace irr {
 
 void
-show_app_menubar(Glvle& gv)
+irritator::show_menubar()
 {
-    bool new_box = false;
-    bool open_box = false;
-    std::string path_name;
-    std::string dir_name;
+    namespace fs = std::filesystem;
+
+    auto ec = std::error_code{};
+    auto new_box{ false };
+    auto open_box{ false };
 
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("File")) {
-            if (ImGui::MenuItem("New", "Ctrl+N"))
+            if (ImGui::MenuItem("New", "Ctrl+N")) {
+                if (filesystem_dialog.status ==
+                    FilesystemDialog::filesystem_dialog_status::close) {
+                    filesystem_dialog.status = FilesystemDialog::
+                      filesystem_dialog_status::new_directory;
+                    filesystem_dialog.init(fs::current_path(),
+                                           "New package",
+                                           "Select a new directoy");
+                }
                 new_box = true;
-            if (ImGui::MenuItem("Open", "Ctrl+O"))
-                open_box = true;
-
-            ImGui::Separator();
-            if (ImGui::MenuItem("Close", nullptr, gv.have_package))
-                gv.clear();
-
-            ImGui::Separator();
-            if (ImGui::MenuItem("Quit", "Ctrl+Q", false, false)) {
             }
+            if (ImGui::MenuItem("Open", "Ctrl+O")) {
+                if (filesystem_dialog.status ==
+                    FilesystemDialog::filesystem_dialog_status::close) {
+                    filesystem_dialog.status = FilesystemDialog::
+                      filesystem_dialog_status::open_directory;
+                    filesystem_dialog.init(
+                      fs::current_path(), "Open package", "Select a directoy");
+                }
+                open_box = true;
+            }
+            ImGui::Separator();
+
+            ImGui::Separator();
+            ImGui::MenuItem("Quit", "Ctrl+Q", false, false);
             ImGui::EndMenu();
         }
 
         if (ImGui::BeginMenu("View")) {
-            ImGui::MenuItem("Package window",
-                            nullptr,
-                            &gv.show_package_window,
-                            gv.have_package);
-            ImGui::MenuItem("Log window", nullptr, &gv.show_log_window, true);
+            Package::item* ptr = nullptr;
+            while (package_windows.packages.next(ptr)) {
+                auto& top_node = package_windows.hierarchy.get(ptr->top_id);
+                ImGui::MenuItem(
+                  "Package Window##ID", nullptr, &ptr->show_window, true);
+            }
+
+            ImGui::MenuItem("Log window", nullptr, &log_window.show_window);
 
             ImGui::EndMenu();
         }
@@ -77,34 +69,7 @@ show_app_menubar(Glvle& gv)
     if (open_box)
         ImGui::OpenPopup("Open package");
 
-    if (select_new_directory_dialog("New package",
-                                    "Select a new directory",
-                                    "/home/gquesnel/devel/bits",
-                                    path_name,
-                                    dir_name)) {
-        if (!path_name.empty() && !dir_name.empty()) {
-            try {
-                gv.open(path_name, dir_name, true);
-            } catch (const std::exception& e) {
-                printf("%s.\n", e.what());
-            }
-        }
-    }
-
-    if (select_directory_dialog("Open package",
-                                "Select a new directory",
-                                "/home/gquesnel/devel/bits",
-                                path_name,
-                                dir_name)) {
-        if (!dir_name.empty()) {
-            try {
-                gv.open(path_name, dir_name, false);
-            } catch (const std::exception& e) {
-                printf("%s.\n", e.what());
-            }
-        }
-    }
+    filesystem_dialog.show();
 }
 
-} // namespace glvle
-} // namespace vle
+} // namespace irr
