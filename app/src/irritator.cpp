@@ -101,6 +101,10 @@ parse_argument(int argc, char* argv[])
 int
 irritator::init(int argc, char* argv[])
 {
+    package_windows.main_window = this;
+    log_window.main_window = this;
+    filesystem_dialog.main_window = this;
+
     package_windows.init(64, 1024);
 
     auto args = parse_argument(argc, argv);

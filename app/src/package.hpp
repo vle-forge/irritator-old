@@ -13,6 +13,8 @@
 
 namespace irr {
 
+struct irritator;
+
 struct Package
 {
     struct Path
@@ -35,6 +37,7 @@ struct Package
     multi_linker<IDs, IDs> nodes_linker; // Stores hierarchy.
     std::deque<IDs> stack;               // Cache to store ID
     data_array<item, IDs> packages;      // List of opened packages.
+    irritator* main_window = nullptr;
 
     void init(int package_capacity, int file_capacity);
 

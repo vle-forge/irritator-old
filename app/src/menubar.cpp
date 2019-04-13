@@ -22,11 +22,11 @@ irritator::show_menubar()
             if (ImGui::MenuItem("New", "Ctrl+N")) {
                 if (filesystem_dialog.status ==
                     FilesystemDialog::filesystem_dialog_status::close) {
-                    filesystem_dialog.status = FilesystemDialog::
-                      filesystem_dialog_status::new_directory;
+                    filesystem_dialog.status =
+                      FilesystemDialog::filesystem_dialog_status::new_directory;
                     filesystem_dialog.init(fs::current_path(),
                                            "New package",
-                                           "Select a new directoy");
+                                           "Select a new directory");
                 }
                 new_box = true;
             }
@@ -36,7 +36,7 @@ irritator::show_menubar()
                     filesystem_dialog.status = FilesystemDialog::
                       filesystem_dialog_status::open_directory;
                     filesystem_dialog.init(
-                      fs::current_path(), "Open package", "Select a directoy");
+                      fs::current_path(), "Open package", "Select a directory");
                 }
                 open_box = true;
             }

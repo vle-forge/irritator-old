@@ -26,6 +26,7 @@ struct LogWindow
     ImGuiTextBuffer buffer;
     ImGuiTextFilter filter;
     ImVector<int> line_offsets;
+    irritator* main_window = nullptr;
 
     bool auto_scroll = true;
     bool scroll_to_bottom = false;
@@ -54,6 +55,7 @@ struct FilesystemDialog
     char input[MAX_FILE_DIALOG_NAME_BUFFER];
     const char* name = nullptr;
     const char* description = nullptr;
+    irritator* main_window = nullptr;
 
     enum class filesystem_dialog_status
     {

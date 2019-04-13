@@ -3,6 +3,7 @@
 // http://www.boost.org/LICENSE_1_0.txt)
 
 #include "package.hpp"
+#include "irritator.hpp"
 
 #define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
 #include "imgui.h"
@@ -32,19 +33,22 @@ Package::open(const std::filesystem::path& path)
 
     std::error_code ec;
 
-    if (!fs::is_directory(path, ec))
+    if (!fs::is_directory(path, ec)) {
+        main_window->log_window.log(4, "Package: %s must be a directory.\n");
         return;
+    }
 
     stack.clear();
 
     Path& top = hierarchy.alloc();
     IDs top_id = hierarchy.get_id(top);
     top.node = path;
-    top.have_children = fs::is_directory(top.node, ec);
+    top.have_children = true;
     top.show_open = true;
 
-    if (!ec)
-        return;
+    auto& new_package = packages.alloc();
+    new_package.top_id = top_id;
+    new_package.show_window = true;
 
     if (top.have_children)
         stack.emplace_back(top_id);
@@ -61,7 +65,7 @@ Package::open(const std::filesystem::path& path)
                current_path->node, fs_iterator_flags, ec);
              it != fs::directory_iterator();
              ++it) {
-            if (ec && it->is_regular_file()) {
+            if (!ec && it->is_regular_file()) {
                 auto& child = hierarchy.alloc();
                 child.node = *it;
                 child.have_children = false;
@@ -75,7 +79,7 @@ Package::open(const std::filesystem::path& path)
                current_path->node, fs_iterator_flags, ec);
              it != fs::directory_iterator();
              ++it) {
-            if (ec && it->is_directory()) {
+            if (!ec && it->is_directory()) {
                 auto& child = hierarchy.alloc();
                 child.node = *it;
                 child.have_children = true;
@@ -95,15 +99,17 @@ Package::show()
 
     item* ptr = nullptr;
     while (packages.next(ptr)) {
-        ImGui::SetNextWindowSize(ImVec2(350, 500), true);
-        if (!ImGui::Begin("Package window", &ptr->show_window)) {
-            ImGui::End();
+        auto* top_node = hierarchy.try_to_get(ptr->top_id);
+        if (!top_node) {
+            main_window->log_window.log(4, "Package: strange behavior\n");
             return;
         }
 
-        auto* top_node = hierarchy.try_to_get(ptr->top_id);
-        if (!top_node)
+        ImGui::SetNextWindowSize(ImVec2(350, 500), true);
+        if (!ImGui::Begin(top_node->node.c_str(), &ptr->show_window)) {
+            ImGui::End();
             return;
+        }
 
         ImGui::TextColored(ImVec4(1.f, 1.f, 0.f, 1.f),
                            "%s",
@@ -118,9 +124,6 @@ Package::show()
 
             if (top->is_read) {
                 stack.pop_front();
-
-                if (!top)
-                    continue;
 
                 if (top->show_open) {
                     for (auto& node :

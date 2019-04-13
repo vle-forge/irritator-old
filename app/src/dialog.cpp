@@ -33,10 +33,9 @@ fill_filesystem_paths(const std::filesystem::path& current,
             files.emplace_back(it->path());
     }
 
-    std::sort(
-      files.begin(), files.end(), [](const auto& lhs, const auto& rhs) {
-          return lhs.filename() < rhs.filename();
-      });
+    std::sort(files.begin(), files.end(), [](const auto& lhs, const auto& rhs) {
+        return lhs.filename() < rhs.filename();
+    });
 
     std::sort(dirs.begin(), dirs.end(), [](const auto& lhs, const auto& rhs) {
         return lhs.filename() < rhs.filename();
@@ -72,14 +71,14 @@ FilesystemDialog::show()
         if (open_file_dialog()) {
             status = filesystem_dialog_status::close;
             if (!selected.empty())
-                printf("New package %s.\n", selected.string().c_str());
+                main_window->package_windows.open(selected);
         }
         break;
     case filesystem_dialog_status::open_directory:
         if (open_directory_dialog()) {
             status = filesystem_dialog_status::close;
             if (!selected.empty())
-                printf("New package %s.\n", selected.string().c_str());
+                main_window->package_windows.open(selected);
         }
         break;
     case filesystem_dialog_status::new_directory:
