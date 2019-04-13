@@ -11,6 +11,7 @@
 
 #include <cassert>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 
 namespace irr {
@@ -417,12 +418,21 @@ template<typename T, typename Identifier>
 bool
 data_array<T, Identifier>::next(T*& t)
 {
+    int index;
+
     if (t) {
         auto id = get_id(*t);
-        int index = get_index(id);
+        index = get_index(id);
         ++index;
 
         for (; index < max_used; ++index) {
+            if (valid(items[index].id)) {
+                t = &items[index].item;
+                return true;
+            }
+        }
+    } else {
+        for (index = 0; index < max_used; ++index) {
             if (valid(items[index].id)) {
                 t = &items[index].item;
                 return true;
