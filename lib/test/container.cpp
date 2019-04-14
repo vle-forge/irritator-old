@@ -130,10 +130,77 @@ check_data_array()
     }
 }
 
+static void
+check_linker()
+{
+    struct position
+    {
+        float x;
+    };
+
+    struct direction
+    {
+        int d;
+    };
+
+    irr::data_array<position, irr::IDs> pos;
+    irr::data_array<direction, irr::IDs> dirs;
+    irr::linker<irr::IDs, irr::IDs> single;
+    pos.init(3);
+    dirs.init(4);
+    single.init(10);
+
+    assert(pos.items != nullptr);
+    assert(pos.max_size == 0);
+    assert(pos.max_used == 0);
+    assert(pos.capacity == 3);
+    assert(pos.next_key == 1);
+    assert(pos.free_head == -1);
+    assert(dirs.items != nullptr);
+    assert(dirs.max_size == 0);
+    assert(dirs.max_used == 0);
+    assert(dirs.capacity == 4);
+    assert(dirs.next_key == 1);
+    assert(dirs.free_head == -1);
+
+    pos.alloc().x = 1.f;
+    pos.alloc().x = 2.f;
+    pos.alloc().x = 3.f;
+
+    dirs.alloc().d = 0;
+    dirs.alloc().d = 1;
+    dirs.alloc().d = 2;
+    dirs.alloc().d = 4;
+
+    assert(pos.items != nullptr);
+    assert(pos.max_size == 3);
+    assert(pos.max_used == 3);
+    assert(pos.capacity == 3);
+    assert(pos.next_key == 4);
+    assert(pos.free_head == -1);
+    assert(dirs.items != nullptr);
+    assert(dirs.max_size == 4);
+    assert(dirs.max_used == 4);
+    assert(dirs.capacity == 4);
+    assert(dirs.next_key == 5);
+    assert(dirs.free_head == -1);
+
+    assert(single.size() == 10);
+    single.emplace(pos.get_id(pos.get(0)), dirs.get_id(dirs.get(0)));
+    single.emplace(pos.get_id(pos.get(0)), dirs.get_id(dirs.get(1)));
+    single.emplace(pos.get_id(pos.get(1)), dirs.get_id(dirs.get(2)));
+    single.emplace(pos.get_id(pos.get(2)), dirs.get_id(dirs.get(3)));
+    assert(single.size() == 10);
+
+    assert(single[pos.get_id(pos.get(0))] == dirs.get_id(dirs.get(1)));
+    assert(single[pos.get_id(pos.get(1))] == dirs.get_id(dirs.get(2)));
+    assert(single[pos.get_id(pos.get(2))] == dirs.get_id(dirs.get(3)));
+}
 int
 main(int /* argc */, char* /* argv */[])
 {
     check_data_array();
+    check_linker();
 
     return 0;
 }

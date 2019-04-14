@@ -47,11 +47,15 @@ public:
     {
         assert(capacity > 0);
 
-        items.reserve(capacity);
+        items.resize(capacity, 0);
     }
 
-    void emplace(const identifier_type id,
-                 const referenced_type value) noexcept
+    int size() const noexcept
+    {
+        return static_cast<int>(items.size());
+    }
+
+    void emplace(const identifier_type id, const referenced_type value) noexcept
     {
         assert(irr::valid(id));
 
@@ -110,8 +114,7 @@ struct multi_linker_node
 template<typename Identifier,
          typename Referenced,
          typename IdentifierAllocator = std::allocator<int>,
-         typename NodeAllocator =
-           std::allocator<multi_linker_node<Referenced>>>
+         typename NodeAllocator = std::allocator<multi_linker_node<Referenced>>>
 class multi_linker
 {
 public:
@@ -260,8 +263,8 @@ private:
             friend bool operator==(const iterator& lhs,
                                    const iterator& rhs) noexcept
             {
-                return lhs.list == rhs.list &&
-                       lhs.dataarray == rhs.dataarray && lhs.elem == rhs.elem;
+                return lhs.list == rhs.list && lhs.dataarray == rhs.dataarray &&
+                       lhs.elem == rhs.elem;
             }
 
             friend bool operator!=(const iterator& lhs,
@@ -277,9 +280,7 @@ private:
         int elem = -1;
 
     public:
-        view(this_type& list_,
-             DataArray& dataarray_,
-             Identifier elem_) noexcept
+        view(this_type& list_, DataArray& dataarray_, Identifier elem_) noexcept
           : list(list_)
           , dataarray(dataarray_)
           , elem(elem_)
