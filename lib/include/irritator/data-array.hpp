@@ -21,6 +21,11 @@ using ListIDw = long int;
 using ID = std::uint64_t;
 using IDs = std::uint32_t;
 
+constexpr static ListID Invalid_ListID = -1;
+constexpr static ListIDw Invalid_ListIDw = -1l;
+constexpr static ID Invalid_ID = 0u;
+constexpr static IDs Invalid_IDs = 0ul;
+
 constexpr int
 get_index(ID id) noexcept
 {
@@ -406,6 +411,12 @@ struct data_list
         ++max_size;
 
         return new_index;
+    }
+
+    void emplace(list_identifier_type& list_id,
+                 const value_type& elem) noexcept
+    {
+        emplace(list_id, data->get_id(elem));
     }
 
     void emplace(list_identifier_type& list_id, identifier_type id) noexcept

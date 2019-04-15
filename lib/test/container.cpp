@@ -5,6 +5,8 @@
 #include <irritator/data-array.hpp>
 #include <irritator/linker.hpp>
 
+#include <string>
+
 #include <cassert>
 
 static void
@@ -274,13 +276,107 @@ check_linker()
     assert(single[pos.get_id(pos.get(2))] == dirs.get_id(dirs.get(3)));
 }
 
+struct Name
+{
+    char item[16];
+};
+
+void
+affect_name(Name& name, const char* str) noexcept
+{
+    std::strncpy(name.item, str, std::size(name.item));
+}
+
+struct Node
+{
+    float x{ 0.f };
+    float y{ 0.f };
+    float height{ 0.f };
+    float width{ 0.f };
+};
+
+struct Model
+{
+    irr::IDs name = irr::Invalid_IDs;
+    irr::IDs gui = irr::Invalid_IDs;
+    irr::IDs dynamics = irr::Invalid_IDs;
+    irr::ListID conditions = irr::Invalid_ListID;
+    irr::ListID observables = irr::Invalid_ListID;
+    irr::ListID input_slots = irr::Invalid_ListID;
+    irr::ListID output_slots = irr::Invalid_ListID;
+};
+
+struct InputSlot
+{
+    irr::IDs name;
+    float x{ 0.f };
+    float y{ 0.f };
+    int index{ 0 };
+};
+
+struct OutputSlot
+{
+    irr::IDs name;
+    float x{ 0.f };
+    float y{ 0.f };
+    int index{ 0 };
+};
+
+static void
+check_structued_data()
+{
+    using names_type = irr::data_array<Name, irr::IDs>;
+    using nodes_type = irr::data_array<Node, irr::IDs>;
+    using models_type = irr::data_array<Model, irr::IDs>;
+    using input_slots_type = irr::data_array<InputSlot, irr::IDs>;
+    using output_slots_type = irr::data_array<OutputSlot, irr::IDs>;
+
+    using input_slots_list_type =
+      irr::data_list<input_slots_type, irr::ListID, 3>;
+    using output_slots_list_type =
+      irr::data_list<output_slots_type, irr::ListID, 3>;
+
+    names_type names;
+    nodes_type nodes;
+    models_type models;
+    input_slots_type input_slots;
+    output_slots_type output_slots;
+    input_slots_list_type input_slots_list;
+    output_slots_list_type output_slots_list;
+
+    names.init(1024);
+    nodes.init(256);
+    models.init(256);
+    input_slots.init(256);
+    output_slots.init(256);
+    input_slots_list.init(&input_slots, 65535);
+    output_slots_list.init(&output_slots, 65535);
+
+    auto& mdl = models.alloc();
+
+    auto& n1 = names.alloc();
+    affect_name(n1, "in");
+
+    auto& n2 = names.alloc();
+    affect_name(n2, "out");
+
+    auto& in = input_slots.alloc();
+    in.name = names.get_id(n1);
+    auto& out = output_slots.alloc();
+    out.name = names.get_id(n2);
+
+    input_slots_list.emplace(mdl.input_slots, in);
+    output_slots_list.emplace(mdl.input_slots, out);
+}
+
 int
 main(int /* argc */, char* /* argv */ [])
 {
     check_data_array();
     check_data_list();
-
     check_linker();
+
+    check_structued_data();
 
     return 0;
 }
