@@ -131,6 +131,83 @@ check_data_array()
 }
 
 static void
+check_data_list()
+{
+    struct x_position
+    {
+        float x = { 0.f };
+        irr::ListID y = { -1 };
+    };
+
+    struct y_position
+    {
+        float y = { 0.f };
+    };
+
+    irr::data_array<x_position, irr::IDs> x_array;
+    irr::data_array<y_position, irr::IDs> y_array;
+    irr::data_list<irr::data_array<y_position, irr::IDs>, irr::ListID, 3>
+      links;
+
+    x_array.init(10);
+    y_array.init(10);
+    links.init(&y_array, 32);
+
+    auto& x1 = x_array.alloc();
+    x1.x = 1.f;
+    auto& x2 = x_array.alloc();
+    x2.x = 2.f;
+    auto& x3 = x_array.alloc();
+    x3.x = 3.f;
+
+    auto& y1 = y_array.alloc();
+    y1.y = 1.f;
+    auto& y2 = y_array.alloc();
+    y2.y = 2.f;
+    auto& y3 = y_array.alloc();
+    y3.y = 3.f;
+
+    links.emplace(x1.y, y_array.get_id(y1));
+    links.emplace(x1.y, y_array.get_id(y2));
+    links.emplace(x1.y, y_array.get_id(y3));
+
+    int size = 0;
+    for (auto it = links.begin(x1.y), et = links.end(); it != et; ++it)
+        ++size;
+    assert(size == 3);
+
+    y_array.free(y1);
+
+    size = 0;
+    for (auto it = links.begin(x1.y), et = links.end(); it != et; ++it)
+        ++size;
+
+    assert(size == 2);
+
+    y_array.free(y2);
+
+    size = 0;
+    for (auto it = links.begin(x1.y), et = links.end(); it != et; ++it)
+        ++size;
+
+    assert(size == 1);
+
+    y_array.free(y3);
+
+    size = 0;
+    for (auto it = links.begin(x1.y), et = links.end(); it != et; ++it)
+        ++size;
+
+    assert(size == 0);
+
+    size = 0;
+    for (auto it = links.begin(x1.y), et = links.end(); it != et; ++it)
+        ++size;
+
+    assert(size == 0);
+}
+
+static void
 check_linker()
 {
     struct position
@@ -196,10 +273,13 @@ check_linker()
     assert(single[pos.get_id(pos.get(1))] == dirs.get_id(dirs.get(2)));
     assert(single[pos.get_id(pos.get(2))] == dirs.get_id(dirs.get(3)));
 }
+
 int
-main(int /* argc */, char* /* argv */[])
+main(int /* argc */, char* /* argv */ [])
 {
     check_data_array();
+    check_data_list();
+
     check_linker();
 
     return 0;
