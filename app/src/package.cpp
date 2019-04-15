@@ -34,7 +34,8 @@ Package::open(const std::filesystem::path& path)
     std::error_code ec;
 
     if (!fs::is_directory(path, ec)) {
-        main_window->log_window.log(4, "Package: %s must be a directory.\n");
+        main_window->log_window.log(
+          4, "Package: %s must be a directory.\n", path.c_str());
         return;
     }
 
