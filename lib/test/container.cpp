@@ -17,7 +17,7 @@ check_data_array()
         float x;
     };
 
-    irr::data_array<position, irr::IDs> array;
+    irr::data_array<position, irr::ID> array;
 
     assert(array.items == nullptr);
     assert(array.max_size == 0);
@@ -146,10 +146,9 @@ check_data_list()
         float y = { 0.f };
     };
 
-    irr::data_array<x_position, irr::IDs> x_array;
-    irr::data_array<y_position, irr::IDs> y_array;
-    irr::data_list<irr::data_array<y_position, irr::IDs>, irr::ListID, 3>
-      links;
+    irr::data_array<x_position, irr::ID> x_array;
+    irr::data_array<y_position, irr::ID> y_array;
+    irr::data_list<irr::data_array<y_position, irr::ID>, irr::ListID, 3> links;
 
     x_array.init(10);
     y_array.init(10);
@@ -222,9 +221,9 @@ check_linker()
         int d;
     };
 
-    irr::data_array<position, irr::IDs> pos;
-    irr::data_array<direction, irr::IDs> dirs;
-    irr::linker<irr::IDs, irr::IDs> single;
+    irr::data_array<position, irr::ID> pos;
+    irr::data_array<direction, irr::ID> dirs;
+    irr::linker<irr::ID, irr::ID> single;
     pos.init(3);
     dirs.init(4);
     single.init(10);
@@ -276,97 +275,164 @@ check_linker()
     assert(single[pos.get_id(pos.get(2))] == dirs.get_id(dirs.get(3)));
 }
 
+constexpr int max_name_length = 8;
+constexpr int max_slot_name_length = 8;
+
 struct Name
 {
-    char item[16];
+    char item[max_name_length];
 };
 
-void
-affect_name(Name& name, const char* str) noexcept
+struct SlotName
 {
-    std::strncpy(name.item, str, std::size(name.item));
-}
+    char item[max_slot_name_length];
+};
 
 struct Node
 {
-    float x{ 0.f };
-    float y{ 0.f };
-    float height{ 0.f };
-    float width{ 0.f };
+    float x = 0.f;
+    float y = 0.f;
+    float height = 0.f;
+    float width = 0.f;
+    bool selected = false;
+};
+
+struct Connection
+{
+    irr::ID input_model = 0;
+    irr::ID input_slot = 0;
+    irr::ID output_model = 0;
+    irr::ID output_slot = 0;
+};
+
+struct CoupledModel
+{
+    irr::ListID children = -1;
+    irr::ListID connections = -1;
+};
+
+struct Slot
+{
+    irr::ID name;
+    irr::ListID values;
+};
+
+struct AtomicModel
+{
+    irr::ID dynamics = 0;
+    irr::ListID conditions = -1;
+    irr::ListID observables = -1;
+};
+
+enum class model_type
+{
+    atomic,
+    coupled
 };
 
 struct Model
 {
-    irr::IDs name = irr::Invalid_IDs;
-    irr::IDs gui = irr::Invalid_IDs;
-    irr::IDs dynamics = irr::Invalid_IDs;
-    irr::ListID conditions = irr::Invalid_ListID;
-    irr::ListID observables = irr::Invalid_ListID;
-    irr::ListID input_slots = irr::Invalid_ListID;
-    irr::ListID output_slots = irr::Invalid_ListID;
+    Model() noexcept = default;
+
+    irr::ID name = 0;
+    irr::ID model = 0;
+    irr::ListID input_slots = -1;
+    irr::ListID output_slots = -1;
+
+    union type
+    {
+        AtomicModel atomic;
+        CoupledModel coupled;
+    };
+
+    model_type type = model_type::atomic;
 };
 
-struct InputSlot
+struct Simulator
 {
-    irr::IDs name;
-    float x{ 0.f };
-    float y{ 0.f };
-    int index{ 0 };
+    irr::ID atomic_model;
+
+    float tl;
+    float tn;
 };
 
-struct OutputSlot
+struct Simulation
 {
-    irr::IDs name;
-    float x{ 0.f };
-    float y{ 0.f };
-    int index{ 0 };
+    irr::ID model;
+
+    float start;
+    float current;
+    float end;
 };
+
+using Names = irr::data_array<Name, irr::ID>;
+
+using Models = irr::data_array<Model, irr::ID>;
+using GuiModels = irr::array<Node>;
+
+using slots_type = irr::data_array<Slot, irr::ID>;
+using connections_type = irr::data_array<Connection, irr::ID>;
+
+Model&
+make_atomic_model(Models& models)
+{
+    return models.alloc();
+}
+
+void
+add_name(Model& model, Names& names, const char* str)
+{
+    if (auto* n = names.try_to_get(model.name); n != nullptr) {
+        strncpy(n->item, str, max_name_length - 1);
+        n->item[max_name_length] = '\0';
+    } else {
+        auto& new_n = names.alloc();
+        strncpy(new_n.item, str, max_name_length - 1);
+        new_n.item[max_name_length] = '\0';
+        model.name = names.get_id(new_n);
+    }
+}
 
 static void
 check_structued_data()
 {
-    using names_type = irr::data_array<Name, irr::IDs>;
-    using nodes_type = irr::data_array<Node, irr::IDs>;
-    using models_type = irr::data_array<Model, irr::IDs>;
-    using input_slots_type = irr::data_array<InputSlot, irr::IDs>;
-    using output_slots_type = irr::data_array<OutputSlot, irr::IDs>;
 
-    using input_slots_list_type =
-      irr::data_list<input_slots_type, irr::ListID, 3>;
-    using output_slots_list_type =
-      irr::data_list<output_slots_type, irr::ListID, 3>;
+    // using input_slots_list_type =
+    //   irr::data_list<input_slots_type, irr::ListID, 3>;
+    // using output_slots_list_type =
+    //   irr::data_list<output_slots_type, irr::ListID, 3>;
 
-    names_type names;
-    nodes_type nodes;
-    models_type models;
-    input_slots_type input_slots;
-    output_slots_type output_slots;
-    input_slots_list_type input_slots_list;
-    output_slots_list_type output_slots_list;
+    // names_type names;
+    // nodes_type nodes;
+    // models_type models;
+    // input_slots_type input_slots;
+    // output_slots_type output_slots;
+    // input_slots_list_type input_slots_list;
+    // output_slots_list_type output_slots_list;
 
-    names.init(1024);
-    nodes.init(256);
-    models.init(256);
-    input_slots.init(256);
-    output_slots.init(256);
-    input_slots_list.init(&input_slots, 65535);
-    output_slots_list.init(&output_slots, 65535);
+    // names.init(1024);
+    // nodes.init(256);
+    // models.init(256);
+    // input_slots.init(256);
+    // output_slots.init(256);
+    // input_slots_list.init(&input_slots, 65535);
+    // output_slots_list.init(&output_slots, 65535);
 
-    auto& mdl = models.alloc();
+    // auto& mdl = models.alloc();
 
-    auto& n1 = names.alloc();
-    affect_name(n1, "in");
+    // auto& n1 = names.alloc();
+    // affect_name(n1, "in");
 
-    auto& n2 = names.alloc();
-    affect_name(n2, "out");
+    // auto& n2 = names.alloc();
+    // affect_name(n2, "out");
 
-    auto& in = input_slots.alloc();
-    in.name = names.get_id(n1);
-    auto& out = output_slots.alloc();
-    out.name = names.get_id(n2);
+    // auto& in = input_slots.alloc();
+    // in.name = names.get_id(n1);
+    // auto& out = output_slots.alloc();
+    // out.name = names.get_id(n2);
 
-    input_slots_list.emplace(mdl.input_slots, in);
-    output_slots_list.emplace(mdl.input_slots, out);
+    // input_slots_list.emplace(mdl.input_slots, in);
+    // output_slots_list.emplace(mdl.input_slots, out);
 }
 
 int

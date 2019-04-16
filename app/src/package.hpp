@@ -29,14 +29,14 @@ struct Package
 
     struct item
     {
-        IDs top_id;
+        ID top_id;
         bool show_window;
     };
 
-    data_array<Path, IDs> hierarchy;     // Stores the list of path.
-    multi_linker<IDs, IDs> nodes_linker; // Stores hierarchy.
-    std::deque<IDs> stack;               // Cache to store ID
-    data_array<item, IDs> packages;      // List of opened packages.
+    data_array<Path, ID> hierarchy;    // Stores the list of path.
+    multi_linker<ID, ID> nodes_linker; // Stores hierarchy.
+    std::deque<ID> stack;              // Cache to store ID
+    data_array<item, ID> packages;     // List of opened packages.
     irritator* main_window = nullptr;
 
     void init(int package_capacity, int file_capacity);

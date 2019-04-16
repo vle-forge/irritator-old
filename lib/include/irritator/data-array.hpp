@@ -16,36 +16,30 @@
 
 namespace irr {
 
-using ListID = int;
-using ListIDw = long int;
-using ID = std::uint64_t;
-using IDs = std::uint32_t;
-
-constexpr static ListID Invalid_ListID = -1;
-constexpr static ListIDw Invalid_ListIDw = -1l;
-constexpr static ID Invalid_ID = 0u;
-constexpr static IDs Invalid_IDs = 0ul;
+using ListID = std::int32_t;
+using ID = std::uint32_t;
+using WID = std::uint64_t;
 
 constexpr int
-get_index(ID id) noexcept
+get_index(WID id) noexcept
 {
     return static_cast<int>(id & 0x00000000ffffffff);
 }
 
 constexpr unsigned
-get_key(ID id) noexcept
+get_key(WID id) noexcept
 {
     return static_cast<unsigned>((id & 0xffffffff00000000) >> 32);
 }
 
 constexpr int
-get_index(IDs id) noexcept
+get_index(ID id) noexcept
 {
     return static_cast<int>(id & 0x0000ffff);
 }
 
 constexpr unsigned
-get_key(IDs id) noexcept
+get_key(ID id) noexcept
 {
     return id & 0xffff0000;
 }
@@ -56,14 +50,14 @@ get_max_key() noexcept;
 
 template<>
 constexpr unsigned
-get_max_key<ID>() noexcept
+get_max_key<WID>() noexcept
 {
     return static_cast<unsigned>(0xffffffff00000000 >> 32);
 }
 
 template<>
 constexpr unsigned
-get_max_key<IDs>() noexcept
+get_max_key<ID>() noexcept
 {
     return static_cast<unsigned>(0xffff0000 >> 16);
 }
@@ -74,14 +68,14 @@ size() noexcept;
 
 template<>
 constexpr int
-size<ID>() noexcept
+size<WID>() noexcept
 {
     return INT32_MAX;
 }
 
 template<>
 constexpr int
-size<IDs>() noexcept
+size<ID>() noexcept
 {
     return UINT16_MAX;
 }
@@ -98,17 +92,17 @@ constexpr T
 make_id(unsigned key, int index) noexcept;
 
 template<>
-constexpr ID
-make_id<ID>(unsigned key, int index) noexcept
+constexpr WID
+make_id<WID>(unsigned key, int index) noexcept
 {
-    ID id = key;
+    WID id = key;
     id <<= 32;
     return id | index;
 }
 
 template<>
-constexpr IDs
-make_id<IDs>(unsigned key, int index) noexcept
+constexpr ID
+make_id<ID>(unsigned key, int index) noexcept
 {
     return (key << 16 | index);
 }
@@ -119,17 +113,63 @@ make_next_key(unsigned key) noexcept;
 
 template<>
 constexpr unsigned
+make_next_key<WID>(unsigned key) noexcept
+{
+    return key == get_max_key<WID>() ? 1u : key + 1;
+}
+
+template<>
+constexpr unsigned
 make_next_key<ID>(unsigned key) noexcept
 {
     return key == get_max_key<ID>() ? 1u : key + 1;
 }
 
-template<>
-constexpr unsigned
-make_next_key<IDs>(unsigned key) noexcept
+template<typename T>
+struct array
 {
-    return key == get_max_key<IDs>() ? 1u : key + 1;
-}
+    using this_type = array<T>;
+    using value_type = T;
+    using difference_type = std::ptrdiff_t;
+    using size_type = int;
+
+    value_type* items = nullptr;
+    int size = 0;
+
+    array() = default;
+
+    bool init(int size_) noexcept
+    {
+        if (size_ < 0)
+            return false;
+
+        if (items)
+            delete[] items;
+
+        size = size_;
+        items = new value_type[size_];
+    }
+
+    ~array() noexcept
+    {
+        if (items)
+            delete[] items;
+    }
+
+    value_type& operator[](int i) noexcept
+    {
+        assert(i >= 0 && i < size);
+
+        return items[i];
+    }
+
+    const value_type& operator[](int i) const noexcept
+    {
+        assert(i >= 0 && i < size);
+
+        return items[i];
+    }
+};
 
 template<typename DataArray, typename ListIdentifier, int nb_element = 1>
 struct data_list
@@ -499,13 +539,10 @@ struct data_array
     /* alloc (memclear* and/or construct*, *optional) an item from
        freeList or items[max_used++], sets id to (next_key++ << 16) | index
      */
-    T& alloc();
-
-    template<typename... Args>
-    T& alloc(Args&&... args);
+    T& alloc() noexcept;
 
     // puts entry on free list (uses id to store next)
-    void free(T&);
+    void free(T&) noexcept;
 
     void free(Identifier id);
 
@@ -612,21 +649,19 @@ data_array<T, Identifier>::clear()
 
 template<typename T, typename Identifier>
 void
-Do_alloc(T& /*t*/, std::true_type)
-{
-    // std::memset(&t, 0, sizeof(T));
-}
+Do_alloc(T& /*t*/, std::true_type) noexcept
+{}
 
 template<typename T, typename Identifier>
 void
-Do_alloc(T& t, std::false_type)
+Do_alloc(T& t, std::false_type) noexcept
 {
     new (&t) T();
 }
 
 template<typename T, typename Identifier>
 T&
-data_array<T, Identifier>::alloc()
+data_array<T, Identifier>::alloc() noexcept
 {
     int new_index;
 
@@ -660,15 +695,12 @@ data_array<T, Identifier>::alloc()
 
 template<typename T, typename Identifier>
 void
-Do_free(T& /*t*/, std::true_type)
-{
-    // Really reset memory?
-    // std::memset(&t, 0, sizeof(T));
-}
+Do_free(T& /*t*/, std::true_type) noexcept
+{}
 
 template<typename T, typename Identifier>
 void
-Do_free(T& t, std::false_type)
+Do_free(T& t, std::false_type) noexcept
 {
     // Will catch all exception?
 
@@ -677,7 +709,7 @@ Do_free(T& t, std::false_type)
 
 template<typename T, typename Identifier>
 void
-data_array<T, Identifier>::free(T& t)
+data_array<T, Identifier>::free(T& t) noexcept
 {
     auto id = get_id(t);
     auto index = get_index(id);

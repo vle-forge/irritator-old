@@ -42,7 +42,7 @@ Package::open(const std::filesystem::path& path)
     stack.clear();
 
     Path& top = hierarchy.alloc();
-    IDs top_id = hierarchy.get_id(top);
+    ID top_id = hierarchy.get_id(top);
     top.node = path;
     top.have_children = true;
     top.show_open = true;
