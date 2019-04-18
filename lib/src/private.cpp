@@ -6,20 +6,28 @@
 
 namespace irr {
 
-Context::Context(int verbose_level)
-    : cfile_logger(stdout)
+bool
+Context::init(int verbose_level) noexcept
 {
+    cfile_logger = stdout;
+
     if (verbose_level != 6)
         log_priority = static_cast<Context::message_type>(
-            verbose_level < 0 ? 0 : verbose_level > 7 ? 7 : verbose_level);
+          verbose_level < 0 ? 0 : verbose_level > 7 ? 7 : verbose_level);
+
+    return true;
 }
 
-Context::Context(FILE* f, int verbose_level)
-    : cfile_logger(f ? f : stdout)
+bool
+Context::init(FILE* f, int verbose_level) noexcept
 {
+    cfile_logger = f;
+
     if (verbose_level != 6)
         log_priority = static_cast<Context::message_type>(
-            verbose_level < 0 ? 0 : verbose_level > 7 ? 7 : verbose_level);
+          verbose_level < 0 ? 0 : verbose_level > 7 ? 7 : verbose_level);
+
+    return true;
 }
 
 } // namespace irr

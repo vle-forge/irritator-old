@@ -1,0 +1,20 @@
+{
+    "name": "name",
+    "author": "me",
+    "version": [1, 2, 3],
+
+    "conditions": [
+        {
+            "Condition1": [
+                {"x": 1},
+                {"y": 2},
+                {"z": 2}
+            ],
+            "Condition2": [
+                { "x": "a" },
+                { "y": "b" },
+                { "z": "c" }
+            ]
+        }
+    ]
+}

@@ -6,80 +6,31 @@
 #define ORG_VLEPROJECT_IRRITATOR_SIMULATION_HPP
 
 #include <irritator/data-array.hpp>
-#include <irritator/linker.hpp>
+#include <irritator/export.hpp>
 
-#include <array>
-#include <string>
+#include <filesystem>
+#include <memory>
+#include <optional>
 
 namespace irr {
 
-struct ID2
+constexpr unsigned max_name_length = 8;
+constexpr unsigned max_slot_name_length = 5;
+constexpr unsigned max_buffer_length = 1024;
+
+struct Name
 {
-    constexpr ID2() noexcept = default;
-
-    constexpr ID2(ID id) noexcept
-      : id1(id)
-      , id2(id)
-    {}
-
-    constexpr ID2(ID id1_, ID id2_) noexcept
-      : id1(id1_)
-      , id2(id2_)
-    {}
-
-    ID id1{ 0 };
-    ID id2{ 0 };
+    char string[max_name_length];
 };
 
-/**
- * @brief Store atomic and executive behaviours.
- * @details package and library specifies the package where found the library,
- *     library is the shared library to pickup the dynamics.
- *
- */
-struct Dynamics
+struct Description
 {
-    std::string name;
-    std::string package;   // where to found the shared library.
-    std::string library;   // shared library name (toto equals libtoto.so or
-                           // libtoto.dylib or libtoto.dll).
-    void* alloc = nullptr; // pointer to the factory.
-
-    enum class dynamics_type
-    {
-        local,
-        cpp,
-        js
-    };
-
-    dynamics_type type = dynamics_type::local;
+    char buffer[max_buffer_length];
 };
 
-struct View
+struct SlotName
 {
-    std::string name;
-    std::string location;
-    double timestep = 1.0;
-
-    enum view_option
-    {
-        timed = 0,
-        alloc = 1 << 1,
-        output = 1 << 2,
-        internal = 1 << 3,
-        external = 1 << 4,
-        confluent = 1 << 5,
-        finish = 1 << 6,
-    };
-
-    enum class output_type
-    {
-        csv,
-        json
-    };
-
-    unsigned view = view_option::timed;
-    output_type type = output_type::csv;
+    char string[max_slot_name_length];
 };
 
 struct vec2
@@ -247,184 +198,189 @@ enum class value_type
 
 struct Value
 {
+    ID value;
     value_type type = value_type::none;
 };
 
 struct NamedValue
 {
-    std::string name;
+    ID name;
+    ID value;
     value_type type = value_type::none;
 };
 
 struct Condition
 {
-    std::string name;
+    ID name;
+    ListID values;
 };
 
-struct Port
+struct Node
 {
-    std::string name;
-
-    /* plus list of input or output message */
+    float x = 0.f;
+    float y = 0.f;
+    float height = 0.f;
+    float width = 0.f;
+    bool selected = false;
 };
 
-struct Model
+struct Connection
 {
-    std::string name;
+    ID input_model = 0;
+    ID input_slot = 0;
+    ID output_model = 0;
+    ID output_slot = 0;
+};
 
-    enum class model_type
+struct Slot
+{
+    ID name = 0;
+    ListID values = -1;
+};
+
+struct CoupledModel
+{
+    ListID children = -1;
+    ListID connections = -1;
+};
+
+enum class dynamics_type
+{
+    interpreted,
+    internal,
+    shared_library
+};
+
+enum class internal_dynamics_type
+{
+    counter,
+    generator,
+    observer,
+};
+
+class CodeDynamic
+{
+public:
+    virtual void init(int capacity) = 0;
+    virtual ID alloc() = 0;
+    virtual void free(ID model) = 0;
+    virtual int size() const noexcept = 0;
+    virtual double start(ID model, double time) = 0;
+    virtual double transition(ID model, double time) = 0;
+    virtual void output(ID model) = 0;
+};
+
+struct InterpretedDynamic
+{};
+
+struct InternalDynamic
+{
+    ID id;
+    internal_dynamics_type type;
+
+    CodeDynamic* dynamics = nullptr;
+};
+
+struct SharedLibraryDynamic
+{
+    ID package;
+    ID library;
+
+    CodeDynamic* dynamics = nullptr;
+};
+
+struct Dynamic
+{
+    Dynamic() noexcept = default;
+
+    ID name;
+
+    union type
     {
-        atomic,
-        coupled
+        InterpretedDynamic interpreted;
+        InternalDynamic internal;
+        SharedLibraryDynamic shared_library;
+    };
+};
+
+enum view_option
+{
+    timed = 0,
+    alloc = 1 << 1,
+    output = 1 << 2,
+    internal = 1 << 3,
+    external = 1 << 4,
+    confluent = 1 << 5,
+    finish = 1 << 6,
+};
+
+enum class view_type
+{
+    csv,
+    json
+};
+
+struct View
+{
+    float time_step = 1.f;
+
+    view_option options = view_option::timed;
+    view_type type = view_type::json;
+};
+
+struct AtomicModel
+{
+    ID dynamics = 0;
+    ListID conditions = -1;
+    ListID observables = -1;
+};
+
+enum class model_type
+{
+    atomic,
+    coupled
+};
+
+struct BaseModel
+{
+    BaseModel() noexcept = default;
+
+    ID parent = 0;
+    ID name = 0;
+    ID model = 0;
+    ListID input_slots = -1;
+    ListID output_slots = -1;
+
+    union type
+    {
+        AtomicModel atomic;
+        CoupledModel coupled;
     };
 
-    std::int16_t input_slot_number = 0;
-    std::int16_t output_slot_number = 0;
     model_type type = model_type::atomic;
 };
 
-// struct GuiModel
-// {
-//     ImVec2 pos = { 0, 0 };
-//     ImVec2 size = { 0, 0 };
-//     bool selected = { false };
-// };
-
-// struct GuiPort
-// {
-//     ImVec2 pos = { 0, 0 };
-//     ImVec2 size = { 0, 0 };
-//     bool selected = { false };
-// };
-
 struct Class
 {
-    std::string name;
+    ID name;
+    ID model;
 };
 
-struct SimDynamics
+struct Simulator
 {
-    // 1) classical hierarchy model? => no
-    // 2) function with state:
-    // std::function<Time(State, Time)> start;
-    // std::function<Time(State, Time)> transition;
-    // std::function<void(State)> output;
-    // 3) Each library gives a DataArray<T> of atomic model.
-    //    dynamics_id gives the correct library
+    ID atomic_model;
 
-    unsigned dynamics_id;
-    ID model_id;
-    bool debug;
+    float tl;
+    float tn;
 };
 
-template<typename T>
-struct data_array_wrapper
+struct FlatSimulation
 {
-    irr::data_array<T, ID> models;
+    ID model;
 
-    ID alloc()
-    {
-        auto& mdl = models.alloc();
-        return models.get_id(mdl);
-    }
-
-    void free(ID model)
-    {
-        models.free(model);
-    }
-
-    int size() const noexcept
-    {
-        return models.size();
-    }
-
-    double start(ID model, double time)
-    {
-        auto* mdl = models.try_to_get(model);
-        irr_assert(mdl);
-
-        return mdl->start(time);
-    }
-
-    double transition(ID model, double time)
-    {
-        auto* mdl = models.try_to_get(model);
-        irr_assert(mdl);
-
-        return mdl->transition(time);
-    }
-
-    void output(ID model)
-    {
-        auto* mdl = models.try_to_get(model);
-        irr_assert(mdl);
-
-        return mdl->output();
-    }
-};
-
-template<typename T>
-struct AllDynamics
-{
-    std::vector<data_array_wrapper<T>>
-      all_dynamics; // Initialized with the size of the
-                    // DataArray<Dynamics>::size attribute.
-
-    ID alloc(unsigned dynamics_id)
-    {
-        return (dynamics_id < all_dynamics.size())
-                 ? all_dynamics[dynamics_id].alloc()
-                 : 0;
-    }
-
-    void free(unsigned dynamics_id, ID model_id)
-    {
-        if (dynamics_id < all_dynamics.size() &&
-            (model_id < all_dynamics[dynamics_id].size()))
-            all_dynamics[dynamics_id].free(model_id);
-    }
-};
-
-struct SimElement
-{
-    double tn;
-    double tl;
-
-    enum class simulator_element_type
-    {
-        simulator,
-        coordinator
-    };
-
-    simulator_element_type type = simulator_element_type::simulator;
-};
-
-struct InternalEvent
-{
-    double time;
-    ID id;
-};
-
-struct Simulation
-{
-    enum class simulation_type
-    {
-        devs,
-        dsde
-    };
-
-    enum simulation_option
-    {
-        none = 0,
-        flat = 1
-    };
-
-    double begin = 0.0;
-    double end = 1.0;
-    double current = 0.0;
-    unsigned id = 0u;
-    simulation_type type;
-    unsigned option;
+    float start;
+    float current;
+    float end;
 };
 
 struct Context
@@ -441,105 +397,95 @@ struct Context
         debug,     ///< debug-level message
     };
 
-    Context(int verbose_level = 6);
-    Context(std::FILE* f, int verbose_level = 6);
+    Context() = default;
+
+    bool init(int verbose_level = 6) noexcept;
+    bool init(std::FILE* f, int verbose_level = 6) noexcept;
 
     std::FILE* cfile_logger = stdout;
     message_type log_priority = Context::message_type::info;
 };
 
-struct Vpz
+using Names = data_array<Name, ID>;
+using Descriptions = data_array<Description, ID>;
+using SlotNames = data_array<SlotName, ID>;
+
+using Int32s = data_array<std::int32_t, ID>;
+using Int64s = data_array<std::int64_t, ID>;
+using Real32s = data_array<float, ID>;
+using Real64s = data_array<double, ID>;
+using Vec2_32s = data_array<vec2, ID>;
+using Vec3_32s = data_array<vec3, ID>;
+
+using Values = data_array<Value, WID>;
+using NamedValues = data_array<NamedValue, WID>;
+
+using Conditions = data_array<Condition, ID>;
+
+using Nodes = data_array<Node, ID>;
+using Connections = data_array<Connection, ID>;
+using Slots = data_array<Slot, ID>;
+using Views = data_array<View, ID>;
+using Dynamics = data_array<Dynamic, ID>;
+using BaseModels = data_array<BaseModel, ID>;
+using Classes = data_array<Class, ID>;
+
+using Simulators = data_array<Simulator, ID>;
+
+inline void
+string_copy(Name& name, const char* str, unsigned length)
 {
-    std::string name;
-    std::string author;
-    std::string version;
-    std::string date;
+    unsigned max = std::max(max_name_length - 1, length);
+    strncpy(name.string, str, max);
+    name.string[max] = '\0';
+}
 
-    irr::data_array<Dynamics, ID> dynamics;
-    irr::data_array<View, ID> views;
-    irr::data_array<Value, ID> values;
-    irr::data_array<NamedValue, ID> named_values;
-    irr::data_array<Condition, ID> conditions;
-    irr::data_array<Port, ID> input_ports;
-    irr::data_array<Port, ID> output_ports;
-    irr::data_array<Model, ID> models;
-    irr::data_array<Class, ID> classes;
+inline bool
+is_string_equal(Name& name, const char* str)
+{
+    return strncmp(name.string, str, max_name_length) == 0;
+}
 
-    irr::data_array<std::int32_t, ID> integer32;
-    irr::data_array<std::int64_t, ID> integer64;
-    irr::data_array<float, ID> real32;
-    irr::data_array<double, ID> real64;
-    irr::data_array<vec2, ID> vec2_32;
-    irr::data_array<vec3, ID> vec3_32;
+struct Model
+{
+    Model(int estimated_model_number = 4096);
 
-    irr::linker<ID, ID> value_links;
-    irr::linker<ID, ID> named_value_links;
-    irr::linker<ID, ID> model_dynamics;
-    irr::linker<ID, ID> model_parent;
-    irr::multi_linker<ID, ID> model_input_ports;
-    irr::multi_linker<ID, ID> model_output_ports;
-    irr::multi_linker<ID, ID2> model_connections;
-    irr::multi_linker<ID, ID> model_conditions;
-    irr::multi_linker<ID, ID> model_children;
-    irr::multi_linker<ID, ID> condition_named_values;
+    void read(Context& context, const std::filesystem::path& file_name);
 
-    void init(int object_capacity, int list_capacity);
+    ID name;
+    ID author;
+    int version_major;
+    int version_minor;
+    int version_patch;
 
-    Dynamics& add_local_dynamics(std::string name, std::string library);
-    void destroy(Dynamics& dynamic);
-    View& add_timed_view(std::string name,
-                         std::string location,
-                         double timestep,
-                         View::output_type type);
-    View& add_event_view(std::string name,
-                         std::string location,
-                         unsigned view,
-                         View::output_type type);
-    void destroy(View& view);
-    Model& add_model(std::string name, Model::model_type type);
-    void make_parent(const Model& model, const Model& parent);
-    void destroy(Model& model);
-
-    Value& add_value();
-    Value& add_value(float value);
-    Value& add_value(double value);
-    Value& add_value(std::int32_t value);
-    Value& add_value(std::int64_t value);
-    Value& add_value(float x, float y);
-    Value& add_value(float x, float y, float z);
-    void destroy(Value& value);
-
-    void destroy(NamedValue& value);
-    NamedValue& add_named_value(std::string name);
-    NamedValue& add_named_value(std::string name, float value);
-    NamedValue& add_named_value(std::string name, double value);
-    NamedValue& add_named_value(std::string name, std::int32_t value);
-    NamedValue& add_named_value(std::string name, std::int64_t value);
-    NamedValue& add_named_value(std::string name, float x, float y);
-    NamedValue& add_named_value(std::string name, float x, float y, float z);
-
-    Condition& add_condition(std::string name);
-    void append(const Condition& condition, NamedValue& value);
-    void destroy(Condition& condition);
-
-    Port& add_input_port(const Model& model, std::string name);
-    void destroy_input_port(Port& port);
-
-    Port& add_output_port(const Model& model, std::string name);
-    void destroy_output_port(Port& port);
-
-    void make_connection(const Model& coupledmodel,
-                         const Port& port_source,
-                         const Port& port_destination);
+    Names names;
+    Descriptions descriptions;
+    SlotNames slot_names;
+    Int32s int32s;
+    Int64s int64s;
+    Real32s real32s;
+    Real64s real64s;
+    Vec2_32s vec2_32s;
+    Vec3_32s vec3_32s;
+    Values values;
+    NamedValues named_values;
+    Conditions conditions;
+    Nodes nodes;
+    Connections connections;
+    Slots slots;
+    Views views;
+    BaseModels base_models;
+    Classes classes;
 };
 
 struct VLE
 {
-    std::array<std::string, 5> paths;
-};
+    VLE();
 
-VLE
-init_vle() noexcept;
+    std::array<std::filesystem::path, 4> paths;
+    Context context;
+    Dynamics dynamics;
+};
 
 } // irr
 

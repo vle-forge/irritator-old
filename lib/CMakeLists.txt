@@ -10,19 +10,20 @@ set(public_irritator_header
  include/irritator/linker.hpp)
 
 set(private_irritator_source
+  src/json
   src/private.cpp
   src/private.hpp
-  src/simulation.cpp
-  )
+  src/simulation.cpp)
 
-add_library(libirritator ${public_irritator_header} ${private_irritator_source})
+add_library(libirritator ${public_irritator_header}
+  ${private_irritator_source})
 
 option(BUILD_SHARED_LIBS "Build shared library" OFF)
 include(GenerateExportHeader)
 generate_export_header(libirritator
-    EXPORT_MACRO_NAME BX_EXPORT
-    NO_EXPORT_MACRO_NAME BX_NO_EXPORT
-    EXPORT_FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/irritator/export)
+    EXPORT_MACRO_NAME VLE_EXPORT
+    NO_EXPORT_MACRO_NAME VLE_NO_EXPORT
+    EXPORT_FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/irritator/export.hpp)
 
 target_compile_options(libirritator
   PRIVATE
@@ -39,7 +40,8 @@ target_include_directories(libirritator PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/>)
 
 target_link_libraries(libirritator
-  PRIVATE
+  $<$<CXX_COMPILER_ID:GNU>:stdc++fs>
+  $<$<CXX_COMPILER_ID:Clang>:c++fs>
   threads)
 
 set_target_properties(libirritator PROPERTIES
@@ -115,11 +117,17 @@ function(irritator_add_test test_name)
     src
     ${CMAKE_CURRENT_BINARY_DIR})
 
-  target_link_libraries(${test_name} libirritator threads)
+  target_link_libraries(${test_name}
+    PRIVATE
+    $<$<CXX_COMPILER_ID:GNU>:stdc++fs>
+    $<$<CXX_COMPILER_ID:Clang>:c++fs>
+    libirritator
+    threads)
 
   add_test(${test_name} ${test_name})
 endfunction()
 
 if (NOT BUILD_SHARED_LIBS)
   irritator_add_test(test-container test/container.cpp)
+  irritator_add_test(test-json test/json.cpp)
 endif ()
