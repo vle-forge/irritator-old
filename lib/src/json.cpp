@@ -200,12 +200,12 @@ struct irr_json_handler
 
         if (elem.type == irr_json_element_type::project_name) {
             auto& name = model.names.alloc();
-            irr::string_copy(name, str, length);
+            name.name = str;
             model.name = model.names.get_id(name);
             stack.pop();
         } else if (elem.type == irr_json_element_type::project_author) {
             auto& name = model.names.alloc();
-            irr::string_copy(name, str, length);
+            name.name = str;
             model.author = model.names.get_id(name);
             stack.pop();
         }
@@ -243,7 +243,7 @@ struct irr_json_handler
         } else if (stack.top().is_conditions_array_object()) {
             auto& condition = model.conditions.alloc();
             auto& name = model.names.alloc();
-            string_copy(name, str, length);
+            name.name = str;
             condition.name = model.names.get_id(name);
             condition.values = -1;
 

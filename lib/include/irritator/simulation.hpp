@@ -7,6 +7,7 @@
 
 #include <irritator/data-array.hpp>
 #include <irritator/export.hpp>
+#include <irritator/string.hpp>
 
 #include <filesystem>
 #include <memory>
@@ -20,17 +21,17 @@ constexpr unsigned max_buffer_length = 1024;
 
 struct Name
 {
-    char string[max_name_length];
+    string<max_name_length> name;
 };
 
 struct Description
 {
-    char buffer[max_buffer_length];
+    string<max_buffer_length> description;
 };
 
 struct SlotName
 {
-    char string[max_slot_name_length];
+    string<max_slot_name_length> name;
 };
 
 struct vec2
@@ -431,20 +432,6 @@ using BaseModels = data_array<BaseModel, ID>;
 using Classes = data_array<Class, ID>;
 
 using Simulators = data_array<Simulator, ID>;
-
-inline void
-string_copy(Name& name, const char* str, unsigned length)
-{
-    unsigned max = std::max(max_name_length - 1, length);
-    strncpy(name.string, str, max);
-    name.string[max] = '\0';
-}
-
-inline bool
-is_string_equal(Name& name, const char* str)
-{
-    return strncmp(name.string, str, max_name_length) == 0;
-}
 
 struct Model
 {

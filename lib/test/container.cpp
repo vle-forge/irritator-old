@@ -4,10 +4,48 @@
 
 #include <irritator/data-array.hpp>
 #include <irritator/linker.hpp>
+#include <irritator/string.hpp>
 
 #include <string>
 
 #include <cassert>
+
+static void
+check_string()
+{
+    using my_string = irr::string<8>;
+
+    my_string toto;
+    assert(toto.empty());
+    assert(toto.size() == 0);
+    assert(toto.max_size() == 8 - 1);
+    assert(toto == "");
+
+    toto.fill(' ');
+    assert(!toto.empty());
+    assert(toto.size() == 7);
+    assert(toto.max_size() == 8 - 1);
+    assert(toto == "       ");
+
+    toto = "test";
+    assert(!toto.empty());
+    assert(toto.size() == 4);
+    assert(toto.max_size() == 8 - 1);
+    assert(toto != "");
+    assert(toto == "test");
+
+    toto = "1234567890";
+    assert(!toto.empty());
+    assert(toto.size() == 7);
+    assert(toto.max_size() == 8 - 1);
+    assert(toto != "test");
+    assert(toto == "1234567");
+
+    my_string a("aa"), b("bb"), ab("ab");
+    assert(a < b);
+    assert(ab < b);
+    assert(ab > a);
+}
 
 static void
 check_data_array()
@@ -276,8 +314,9 @@ check_linker()
 }
 
 int
-main(int /* argc */, char* /* argv */ [])
+main(int /* argc */, char* /* argv */[])
 {
+    check_string();
     check_data_array();
     check_data_list();
     check_linker();

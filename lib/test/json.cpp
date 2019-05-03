@@ -20,13 +20,13 @@ check_json_01()
     {
         auto* name = model.names.try_to_get(model.name);
         assert(name);
-        assert(irr::is_string_equal(*name, "name"));
+        assert(name->name == "name");
     }
 
     {
         auto* name = model.names.try_to_get(model.author);
         assert(name);
-        assert(irr::is_string_equal(*name, "me"));
+        assert(name->name == "me");
     }
 
     assert(model.version_major == 1);
@@ -35,7 +35,7 @@ check_json_01()
 }
 
 int
-main(int /* argc */, char* /* argv */ [])
+main(int /* argc */, char* /* argv */[])
 {
     check_json_01();
 
