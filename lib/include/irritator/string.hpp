@@ -34,35 +34,29 @@ private:
     container_type buffer;
 
 public:
-    constexpr string() noexcept
-    {
-        clear();
-    }
+    string() noexcept
+      : buffer{ '\0' }
+    {}
 
-    constexpr string(const char* buff) noexcept
+    string(const char* buff) noexcept
+      : buffer{ '\0' }
     {
-        if (buff == nullptr)
-            clear();
-        else {
+        if (buff) {
             std::strncpy(buffer.data(), buff, N - 1);
             buffer[N - 1] = '\0';
         }
     }
 
-    constexpr string(const string& other) noexcept
+    string(string&& other) noexcept = delete;
+    string& operator=(string&& other) noexcept = delete;
+
+    string(const string& other) noexcept
     {
         std::strncpy(buffer.data(), other.buffer.data(), N - 1);
         buffer[N - 1] = '\0';
     }
 
-    constexpr string(string&& other) noexcept
-    {
-        std::strncpy(buffer.data(), other.buffer.data(), N - 1);
-        buffer[N - 1] = '\0';
-        other.buffer[0] = '\0';
-    }
-
-    constexpr string& operator=(const string& other) noexcept
+    string& operator=(const string& other) noexcept
     {
         if (this != &other) {
             string cpy(other);
@@ -77,7 +71,7 @@ public:
         return *this;
     }
 
-    constexpr string& operator=(const char* other) noexcept
+    string& operator=(const char* other) noexcept
     {
         if (other == nullptr)
             clear();
@@ -89,195 +83,172 @@ public:
         return *this;
     }
 
-    constexpr string& operator=(string&& other) noexcept
-    {
-        if (this != &other) {
-            std::strncpy(buffer.data(), other.buffer.data(), N - 1);
-            buffer[N - 1] = '\0';
-            other.buffer[0] = '\0';
-        }
-
-        return *this;
-    }
-
-    constexpr void clear() noexcept
+    void clear() noexcept
     {
         buffer[0] = '\0';
     }
 
-    constexpr void fill(char value) noexcept
+    void fill(char value) noexcept
     {
         std::fill_n(begin(), N - 1, value);
     }
 
-    constexpr bool empty() const noexcept
+    bool empty() const noexcept
     {
         return buffer[0] == '\0';
     }
 
-    constexpr size_t size() const noexcept
+    size_t size() const noexcept
     {
         return strlen(data());
     }
 
-    constexpr size_t max_size() const noexcept
+    size_t max_size() const noexcept
     {
         return N - 1;
     }
 
-    constexpr reference operator[](size_t n) noexcept
+    reference operator[](size_t n) noexcept
     {
         return buffer[n];
     }
 
-    constexpr const_reference operator[](size_t n) const noexcept
+    const_reference operator[](size_t n) const noexcept
     {
         return buffer[n];
     }
 
-    constexpr pointer data() noexcept
+    pointer data() noexcept
     {
         return buffer.data();
     }
 
-    constexpr const_pointer data() const noexcept
+    const_pointer data() const noexcept
     {
         return buffer.data();
     }
 
-    constexpr void swap(this_type& other) noexcept
+    void swap(this_type& other) noexcept
     {
         std::swap_ranges(begin(), end(), other.begin());
     }
 
-    constexpr iterator begin() noexcept
+    iterator begin() noexcept
     {
         return buffer.begin();
     }
 
-    constexpr const_iterator begin() const noexcept
+    const_iterator begin() const noexcept
     {
         return buffer.begin();
     }
 
-    constexpr iterator end() noexcept
+    iterator end() noexcept
     {
         return buffer.end();
     }
 
-    constexpr const_iterator end() const noexcept
+    const_iterator end() const noexcept
     {
         return buffer.end();
     }
 
-    constexpr reverse_iterator rbegin() noexcept
+    reverse_iterator rbegin() noexcept
     {
         return buffer.rbegin();
     }
 
-    constexpr const_reverse_iterator rbegin() const noexcept
+    const_reverse_iterator rbegin() const noexcept
     {
         return buffer.rbegin();
     }
 
-    constexpr reverse_iterator rend() noexcept
+    reverse_iterator rend() noexcept
     {
         return buffer.rend();
     }
 
-    constexpr const_reverse_iterator rend() const noexcept
+    const_reverse_iterator rend() const noexcept
     {
         return buffer.rend();
     }
 
-    constexpr const_iterator cbegin() const noexcept
+    const_iterator cbegin() const noexcept
     {
         return buffer.cbegin();
     }
 
-    constexpr const_iterator cend() const noexcept
+    const_iterator cend() const noexcept
     {
         return buffer.cend();
     }
 
-    constexpr const_reverse_iterator crbegin() const noexcept
+    const_reverse_iterator crbegin() const noexcept
     {
         return buffer.crbegin();
     }
 
-    constexpr const_reverse_iterator crend() const noexcept
+    const_reverse_iterator crend() const noexcept
     {
         return buffer.crend();
     }
 
-    constexpr friend bool operator==(const this_type& lhs,
-                                     const this_type& rhs) noexcept
+    friend bool operator==(const this_type& lhs, const this_type& rhs) noexcept
     {
         return std::strncmp(lhs.buffer.data(), rhs.buffer.data(), N) == 0;
     }
 
-    constexpr friend bool operator!=(const this_type& lhs,
-                                     const this_type& rhs) noexcept
+    friend bool operator!=(const this_type& lhs, const this_type& rhs) noexcept
     {
         return !(lhs == rhs);
     }
 
-    constexpr friend bool operator<(const this_type& lhs,
-                                    const this_type& rhs) noexcept
+    friend bool operator<(const this_type& lhs, const this_type& rhs) noexcept
     {
         return std::strncmp(lhs.buffer.data(), rhs.buffer.data(), N) < 0;
     }
 
-    constexpr friend bool operator>(const this_type& lhs,
-                                    const this_type& rhs) noexcept
+    friend bool operator>(const this_type& lhs, const this_type& rhs) noexcept
     {
         return std::strncmp(lhs.buffer.data(), rhs.buffer.data(), N) > 0;
     }
 
-    constexpr friend bool operator<=(const this_type& lhs,
-                                     const this_type& rhs) noexcept
+    friend bool operator<=(const this_type& lhs, const this_type& rhs) noexcept
     {
         return !(lhs > rhs);
     }
 
-    constexpr friend bool operator>=(const this_type& lhs,
-                                     const this_type& rhs) noexcept
+    friend bool operator>=(const this_type& lhs, const this_type& rhs) noexcept
     {
         return !(lhs < rhs);
     }
 
-    constexpr friend bool operator==(const this_type& lhs,
-                                     const char* rhs) noexcept
+    friend bool operator==(const this_type& lhs, const char* rhs) noexcept
     {
         return std::strncmp(lhs.buffer.data(), rhs, N) == 0;
     }
 
-    constexpr friend bool operator!=(const this_type& lhs,
-                                     const char* rhs) noexcept
+    friend bool operator!=(const this_type& lhs, const char* rhs) noexcept
     {
         return !(lhs == rhs);
     }
 
-    constexpr friend bool operator<(const this_type& lhs,
-                                    const char* rhs) noexcept
+    friend bool operator<(const this_type& lhs, const char* rhs) noexcept
     {
         return std::strncmp(lhs.buffer.data(), rhs, N) < 0;
     }
 
-    constexpr friend bool operator>(const this_type& lhs,
-                                    const char* rhs) noexcept
+    friend bool operator>(const this_type& lhs, const char* rhs) noexcept
     {
         return std::strncmp(lhs.buffer.data(), rhs, N) > 0;
     }
 
-    constexpr friend bool operator<=(const this_type& lhs,
-                                     const char* rhs) noexcept
+    friend bool operator<=(const this_type& lhs, const char* rhs) noexcept
     {
         return !(lhs > rhs);
     }
 
-    constexpr friend bool operator>=(const this_type& lhs,
-                                     const char* rhs) noexcept
+    friend bool operator>=(const this_type& lhs, const char* rhs) noexcept
     {
         return !(lhs < rhs);
     }
