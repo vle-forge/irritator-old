@@ -15,24 +15,7 @@
 
 namespace irr {
 
-constexpr unsigned max_name_length = 8;
-constexpr unsigned max_slot_name_length = 5;
-constexpr unsigned max_buffer_length = 1024;
-
-struct Name
-{
-    string<max_name_length> name;
-};
-
-struct Description
-{
-    string<max_buffer_length> description;
-};
-
-struct SlotName
-{
-    string<max_slot_name_length> name;
-};
+constexpr int max_name_length = 8;
 
 struct vec2
 {
@@ -186,37 +169,229 @@ struct vec3
     }
 };
 
-enum class value_type
-{
-    none,
-    integer32,
-    integer64,
-    real32,
-    real64,
-    vec2_32,
-    vec3_32
-};
-
 struct Value
 {
-    ID value;
+    enum class value_type : int8_t
+    {
+        none,      // empty message
+        integer32, // int32_t
+        integer64, // int64_t
+        real32,    // float
+        real64,    // double
+        vec2_32,   // float[2]
+        vec3_32    // float[3]
+    };
+
+    int32_t index;
+    int16_t size;
     value_type type = value_type::none;
+};
+
+struct Values
+{
+    array<int32_t> integer32;
+    array<int64_t> integer64;
+    array<float> real32;
+    array<double> real64;
+    array<vec2> vec2_32;
+    array<vec3> vec3_32;
+
+    int next_integer32 = 0;
+    int next_integer64 = 0;
+    int next_real32 = 0;
+    int next_real64 = 0;
+    int next_vec2_32 = 0;
+    int next_vec3_32 = 0;
+
+    Values(int capacity)
+      : integer32(capacity)
+      , integer64(capacity)
+      , real32(capacity)
+      , real64(capacity)
+      , vec2_32(capacity)
+      , vec3_32(capacity)
+    {
+        assert(capacity > 0);
+    }
+
+    Value alloc_integer32(int32_t value) noexcept
+    {
+        const auto next = next_integer32++;
+        assert(next < INT32_MAX);
+
+        integer32[next] = value;
+        return Value{ next, 1, Value::value_type::integer32 };
+    }
+
+    Value alloc_integer64(int64_t value) noexcept
+    {
+        const auto next = next_integer64++;
+        assert(next < INT32_MAX);
+
+        integer64[next] = value;
+        return Value{ next, 1, Value::value_type::integer64 };
+    }
+
+    Value alloc_real32(float value) noexcept
+    {
+        const auto next = next_real32++;
+        assert(next < INT32_MAX);
+
+        real32[next] = value;
+        return Value{ next, 1, Value::value_type::real32 };
+    }
+
+    Value alloc_real64(double value) noexcept
+    {
+        const auto next = next_real64++;
+        assert(next < INT32_MAX);
+
+        real64[next] = value;
+        return Value{ next, 1, Value::value_type::real64 };
+    }
+
+    Value alloc_vec2_32(vec2 value) noexcept
+    {
+        const auto next = next_vec2_32++;
+        assert(next < INT32_MAX);
+
+        vec2_32[next] = value;
+        return Value{ next, 1, Value::value_type::vec2_32 };
+    }
+
+    Value alloc_vec3_32(vec3 value) noexcept
+    {
+        const auto next = next_vec3_32++;
+        assert(next < INT32_MAX);
+
+        vec3_32[next] = value;
+        return Value{ next, 1, Value::value_type::vec3_32 };
+    }
+
+    Value alloc_integer32(int32_t value, int16_t length) noexcept
+    {
+        const auto next = next_integer32;
+        assert(length > 0);
+        assert(INT32_MAX - next > length);
+
+        next_integer32 += length;
+        integer32[next] = value;
+        return Value{ next, length, Value::value_type::integer32 };
+    }
+
+    Value alloc_integer64(int64_t value, int16_t length) noexcept
+    {
+        const auto next = next_integer64;
+        assert(length > 0);
+        assert(INT32_MAX - next > length);
+
+        next_integer64 += length;
+        integer64[next] = value;
+        return Value{ next, length, Value::value_type::integer64 };
+    }
+
+    Value alloc_real32(float value, int16_t length) noexcept
+    {
+        const auto next = next_real32;
+        assert(length > 0);
+        assert(INT32_MAX - next > length);
+
+        next_real32 += length;
+        real32[next] = value;
+        return Value{ next, length, Value::value_type::real32 };
+    }
+
+    Value alloc_real64(double value, int16_t length) noexcept
+    {
+        const auto next = next_real64;
+        assert(length > 0);
+        assert(INT32_MAX - next > length);
+
+        next_real64 += length;
+        real64[next] = value;
+        return Value{ next, length, Value::value_type::real64 };
+    }
+
+    Value alloc_vec2_32(vec2 value, int16_t length) noexcept
+    {
+        const auto next = next_vec2_32;
+        assert(length > 0);
+        assert(INT32_MAX - next > length);
+
+        next_vec2_32 += length;
+        vec2_32[next] = value;
+        return Value{ next, length, Value::value_type::vec2_32 };
+    }
+
+    Value alloc_vec3_32(vec3 value, int16_t length) noexcept
+    {
+        const auto next = next_vec3_32;
+        assert(length > 0);
+        assert(INT32_MAX - next > length);
+
+        next_vec3_32 += length;
+        vec3_32[next] = value;
+        return Value{ next, length, Value::value_type::vec3_32 };
+    }
+
+    void clear()
+    {
+        next_integer32 = 0;
+        next_integer64 = 0;
+        next_real32 = 0;
+        next_real64 = 0;
+        next_vec2_32 = 0;
+        next_vec3_32 = 0;
+    }
+
+    template<typename T>
+    auto* get(const Value& v) noexcept
+    {
+        switch (v.type) {
+        case Value::value_type::integer32:
+            return &integer32[v.index];
+        case Value::value_type::integer64:
+            return &integer64[v.index];
+        case Value::value_type::real32:
+            return &real32[v.index];
+        case Value::value_type::real64:
+            return &real64[v.index];
+        case Value::value_type::vec2_32:
+            return &vec2_32[v.index];
+        case Value::value_type::vec3_32:
+            return &vec3_32[v.index];
+        default:
+            return nullptr;
+        }
+    }
 };
 
 struct NamedValue
 {
-    ID name;
-    ID value;
-    value_type type = value_type::none;
+    enum class named_value_type : int8_t
+    {
+        boolean,   // bool
+        integer32, // int32_t
+        integer64, // int64_t
+        real32,    // float
+        real64,    // double
+        string,    // std::string
+        // set,       // std::vector<named_value>
+        // map        // std::map<string, named_value>
+    };
+
+    string<max_name_length> name;
+    ListID named_values;
+    named_value_type type = named_value_type::boolean;
 };
 
 struct Condition
 {
-    ID name;
-    ListID values;
+    string<max_name_length> name;
+    ListID named_values = -1;
 };
 
-struct Node
+struct GuiNode
 {
     float x = 0.f;
     float y = 0.f;
@@ -228,135 +403,78 @@ struct Node
 struct Connection
 {
     ID input_model = 0;
-    ID input_slot = 0;
     ID output_model = 0;
+    ID input_slot = 0;
     ID output_slot = 0;
+};
+
+struct GuiSlot
+{
+    vec2 position;
 };
 
 struct Slot
 {
-    ID name = 0;
-    ListID values = -1;
+    string<8> name;
 };
 
-struct CoupledModel
+struct GuiConnection
 {
-    ListID children = -1;
-    ListID connections = -1;
-};
-
-enum class dynamics_type
-{
-    interpreted,
-    internal,
-    shared_library
-};
-
-enum class internal_dynamics_type
-{
-    counter,
-    generator,
-    observer,
-};
-
-class CodeDynamic
-{
-public:
-    virtual void init(int capacity) = 0;
-    virtual ID alloc() = 0;
-    virtual void free(ID model) = 0;
-    virtual int size() const noexcept = 0;
-    virtual double start(ID model, double time) = 0;
-    virtual double transition(ID model, double time) = 0;
-    virtual void output(ID model) = 0;
-};
-
-struct InterpretedDynamic
-{};
-
-struct InternalDynamic
-{
-    ID id;
-    internal_dynamics_type type;
-
-    CodeDynamic* dynamics = nullptr;
-};
-
-struct SharedLibraryDynamic
-{
-    ID package;
-    ID library;
-
-    CodeDynamic* dynamics = nullptr;
+    vec2 point[3];
 };
 
 struct Dynamic
 {
-    Dynamic() noexcept = default;
-
     ID name;
 
-    union type
-    {
-        InterpretedDynamic interpreted;
-        InternalDynamic internal;
-        SharedLibraryDynamic shared_library;
-    };
-};
-
-enum view_option
-{
-    timed = 0,
-    alloc = 1 << 1,
-    output = 1 << 2,
-    internal = 1 << 3,
-    external = 1 << 4,
-    confluent = 1 << 5,
-    finish = 1 << 6,
-};
-
-enum class view_type
-{
-    csv,
-    json
+    string<128> package_name;
+    string<128> library_name;
 };
 
 struct View
 {
-    float time_step = 1.f;
+    enum view_option : std::int8_t
+    {
+        timed = 0,
+        alloc = 1 << 1,
+        output = 1 << 2,
+        internal = 1 << 3,
+        external = 1 << 4,
+        confluent = 1 << 5,
+        finish = 1 << 6,
+    };
 
+    enum class view_type : std::int8_t
+    {
+        csv,
+        json
+    };
+
+    float time_step = 1.f;
+    string<1024> output_path;
     view_option options = view_option::timed;
     view_type type = view_type::json;
 };
 
-struct AtomicModel
+struct Node
 {
+    enum class model_type : std::int8_t
+    {
+        atomic,
+        coupled
+    };
+
+    ID parent = 0;
+    string<8> name;
+    int input_slots_number = 0;
+    int output_slots_number = 0;
+
     ID dynamics = 0;
     ListID conditions = -1;
     ListID observables = -1;
-};
 
-enum class model_type
-{
-    atomic,
-    coupled
-};
-
-struct BaseModel
-{
-    BaseModel() noexcept = default;
-
-    ID parent = 0;
-    ID name = 0;
-    ID model = 0;
-    ListID input_slots = -1;
-    ListID output_slots = -1;
-
-    union type
-    {
-        AtomicModel atomic;
-        CoupledModel coupled;
-    };
+    ListID children = -1;
+    ListID connections = -1;
 
     model_type type = model_type::atomic;
 };
@@ -367,9 +485,14 @@ struct Class
     ID model;
 };
 
+// Simulation part
+
 struct Simulator
 {
-    ID atomic_model;
+    ID dynamics;
+
+    int input_slots_number;
+    int output_slots_number;
 
     float tl;
     float tn;
@@ -407,20 +530,7 @@ struct Context
     message_type log_priority = Context::message_type::info;
 };
 
-using Names = data_array<Name, ID>;
-using Descriptions = data_array<Description, ID>;
-using SlotNames = data_array<SlotName, ID>;
-
-using Int32s = data_array<std::int32_t, ID>;
-using Int64s = data_array<std::int64_t, ID>;
-using Real32s = data_array<float, ID>;
-using Real64s = data_array<double, ID>;
-using Vec2_32s = data_array<vec2, ID>;
-using Vec3_32s = data_array<vec3, ID>;
-
-using Values = data_array<Value, WID>;
-using NamedValues = data_array<NamedValue, WID>;
-
+using NamedValues = data_array<NamedValue, ID>;
 using Conditions = data_array<Condition, ID>;
 
 using Nodes = data_array<Node, ID>;
@@ -428,10 +538,7 @@ using Connections = data_array<Connection, ID>;
 using Slots = data_array<Slot, ID>;
 using Views = data_array<View, ID>;
 using Dynamics = data_array<Dynamic, ID>;
-using BaseModels = data_array<BaseModel, ID>;
 using Classes = data_array<Class, ID>;
-
-using Simulators = data_array<Simulator, ID>;
 
 struct Model
 {
@@ -439,29 +546,18 @@ struct Model
 
     void read(Context& context, const std::filesystem::path& file_name);
 
-    ID name;
-    ID author;
+    string<32> name;
+    string<32> author;
     int version_major;
     int version_minor;
     int version_patch;
 
-    Names names;
-    Descriptions descriptions;
-    SlotNames slot_names;
-    Int32s int32s;
-    Int64s int64s;
-    Real32s real32s;
-    Real64s real64s;
-    Vec2_32s vec2_32s;
-    Vec3_32s vec3_32s;
-    Values values;
     NamedValues named_values;
     Conditions conditions;
-    Nodes nodes;
     Connections connections;
     Slots slots;
     Views views;
-    BaseModels base_models;
+    Nodes nodes;
     Classes classes;
 };
 

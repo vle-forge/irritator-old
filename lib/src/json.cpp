@@ -199,14 +199,10 @@ struct irr_json_handler
         auto elem = stack.top();
 
         if (elem.type == irr_json_element_type::project_name) {
-            auto& name = model.names.alloc();
-            name.name = str;
-            model.name = model.names.get_id(name);
+            model.name = str;
             stack.pop();
         } else if (elem.type == irr_json_element_type::project_author) {
-            auto& name = model.names.alloc();
-            name.name = str;
-            model.author = model.names.get_id(name);
+            model.author = str;
             stack.pop();
         }
 
@@ -242,10 +238,8 @@ struct irr_json_handler
                 stack.emplace(irr_json_element_type::conditions);
         } else if (stack.top().is_conditions_array_object()) {
             auto& condition = model.conditions.alloc();
-            auto& name = model.names.alloc();
-            name.name = str;
-            condition.name = model.names.get_id(name);
-            condition.values = -1;
+            condition.name = str;
+            condition.named_values = -1;
 
             stack.emplace(
               irr_json_element_type::conditions_array_object_values);

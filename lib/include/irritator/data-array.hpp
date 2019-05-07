@@ -136,7 +136,10 @@ struct array
     value_type* items = nullptr;
     int size = 0;
 
-    array() = default;
+    array(int capacity)
+      : items(new value_type[capacity])
+      , size(capacity)
+    {}
 
     bool init(int size_) noexcept
     {

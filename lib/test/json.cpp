@@ -17,25 +17,15 @@ check_json_01()
     irr::Model model(4096);
     model.read(vle.context, example);
 
-    {
-        auto* name = model.names.try_to_get(model.name);
-        assert(name);
-        assert(name->name == "name");
-    }
-
-    {
-        auto* name = model.names.try_to_get(model.author);
-        assert(name);
-        assert(name->name == "me");
-    }
-
+    assert(model.name == "name");
+    assert(model.author == "me");
     assert(model.version_major == 1);
     assert(model.version_minor == 2);
     assert(model.version_patch == 3);
 }
 
 int
-main(int /* argc */, char* /* argv */[])
+main(int /* argc */, char* /* argv */ [])
 {
     check_json_01();
 
