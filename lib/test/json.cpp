@@ -2,6 +2,7 @@
 // Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
 
+#include <irritator/modeling.hpp>
 #include <irritator/simulation.hpp>
 
 #include <cassert>
@@ -25,7 +26,7 @@ check_json_01()
 }
 
 int
-main(int /* argc */, char* /* argv */ [])
+main(int /* argc */, char* /* argv */[])
 {
     check_json_01();
 

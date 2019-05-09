@@ -1,0 +1,204 @@
+// Copyright (c) 2019 INRA Distributed under the Boost Software License,
+// Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
+// http://www.boost.org/LICENSE_1_0.txt)
+
+#ifndef ORG_VLEPROJECT_IRRITATOR_MODELING_HPP
+#define ORG_VLEPROJECT_IRRITATOR_MODELING_HPP
+
+#include <irritator/data-array.hpp>
+#include <irritator/export.hpp>
+#include <irritator/string.hpp>
+
+#include <filesystem>
+#include <memory>
+#include <optional>
+
+namespace irr {
+
+constexpr int max_name_length = 8;
+
+struct NamedValue
+{
+    enum class named_value_type : int8_t
+    {
+        boolean,   // bool
+        integer32, // int32_t
+        integer64, // int64_t
+        real32,    // float
+        real64,    // double
+        string,    // std::string
+        // set,       // std::vector<named_value>
+        // map        // std::map<string, named_value>
+    };
+
+    string<max_name_length> name;
+    ListID named_values;
+    named_value_type type = named_value_type::boolean;
+};
+
+struct Condition
+{
+    string<max_name_length> name;
+    ListID named_values = -1;
+};
+
+// struct GuiNode
+// {
+//     float x = 0.f;
+//     float y = 0.f;
+//     float height = 0.f;
+//     float width = 0.f;
+//     bool selected = false;
+// };
+
+struct Connection
+{
+    ID input_model = 0;
+    ID output_model = 0;
+    ID input_slot = 0;
+    ID output_slot = 0;
+};
+
+// struct GuiSlot
+// {
+//     vec2 position;
+// };
+
+struct Slot
+{
+    string<8> name;
+};
+
+// struct GuiConnection
+// {
+//     vec2 point[3];
+// };
+
+struct Dynamic
+{
+    ID name;
+
+    string<128> package_name;
+    string<128> library_name;
+};
+
+struct View
+{
+    enum view_option : std::int8_t
+    {
+        timed = 0,
+        alloc = 1 << 1,
+        output = 1 << 2,
+        internal = 1 << 3,
+        external = 1 << 4,
+        confluent = 1 << 5,
+        finish = 1 << 6,
+    };
+
+    enum class view_type : std::int8_t
+    {
+        csv,
+        json
+    };
+
+    float time_step = 1.f;
+    string<1024> output_path;
+    view_option options = view_option::timed;
+    view_type type = view_type::json;
+};
+
+struct Node
+{
+    enum class model_type : std::int8_t
+    {
+        atomic,
+        coupled
+    };
+
+    ID parent = 0;
+    string<8> name;
+    int input_slots_number = 0;
+    int output_slots_number = 0;
+
+    ID dynamics = 0;
+    ListID conditions = -1;
+    ListID observables = -1;
+
+    ListID children = -1;
+    ListID connections = -1;
+
+    model_type type = model_type::atomic;
+};
+
+struct Class
+{
+    ID name;
+    ID model;
+};
+
+struct Context
+{
+    enum class message_type
+    {
+        emerg = 0, ///< system is unusable
+        alert,     ///< action must be taken immediately
+        crit,      ///< critical conditions
+        err,       ///< error conditions
+        warning,   ///< warning conditions
+        notice,    ///< normal, but significant, condition
+        info,      ///< informational message
+        debug,     ///< debug-level message
+    };
+
+    Context() = default;
+
+    bool init(int verbose_level = 6) noexcept;
+    bool init(std::FILE* f, int verbose_level = 6) noexcept;
+
+    std::FILE* cfile_logger = stdout;
+    message_type log_priority = Context::message_type::info;
+};
+
+using NamedValues = data_array<NamedValue, ID>;
+using Conditions = data_array<Condition, ID>;
+
+using Nodes = data_array<Node, ID>;
+using Connections = data_array<Connection, ID>;
+using Slots = data_array<Slot, ID>;
+using Views = data_array<View, ID>;
+using Dynamics = data_array<Dynamic, ID>;
+using Classes = data_array<Class, ID>;
+
+struct Model
+{
+    Model(int estimated_model_number = 4096);
+
+    void read(Context& context, const std::filesystem::path& file_name);
+
+    string<32> name;
+    string<32> author;
+    int version_major;
+    int version_minor;
+    int version_patch;
+
+    NamedValues named_values;
+    Conditions conditions;
+    Connections connections;
+    Slots slots;
+    Views views;
+    Nodes nodes;
+    Classes classes;
+};
+
+struct VLE
+{
+    VLE();
+
+    std::array<std::filesystem::path, 4> paths;
+    Context context;
+    Dynamics dynamics;
+};
+
+} // irr
+
+#endif // ORG_VLEPROJECT_IRRITATOR_MODELING_HPP

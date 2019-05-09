@@ -5,7 +5,7 @@
 #ifndef ORG_VLEPROJECT_IRRITATOR_SOLVER_PRIVATE_HPP
 #define ORG_VLEPROJECT_IRRITATOR_SOLVER_PRIVATE_HPP
 
-#include <irritator/simulation.hpp>
+#include <irritator/modeling.hpp>
 
 #include <fmt/color.h>
 #include <fmt/format.h>
@@ -232,10 +232,7 @@ alert(const Context& ctx,
 
 template<typename Arg1, typename... Args>
 void
-crit(const Context& ctx,
-     const char* fmt,
-     const Arg1& arg1,
-     const Args&... args)
+crit(const Context& ctx, const char* fmt, const Arg1& arg1, const Args&... args)
 {
 #ifdef IRRITATOR_ENABLE_LOG
     detail::log(ctx, Context::message_type::crit, fmt, arg1, args...);
@@ -288,10 +285,7 @@ notice(const Context& ctx,
 
 template<typename Arg1, typename... Args>
 void
-info(const Context& ctx,
-     const char* fmt,
-     const Arg1& arg1,
-     const Args&... args)
+info(const Context& ctx, const char* fmt, const Arg1& arg1, const Args&... args)
 {
 #ifdef IRRITATOR_ENABLE_LOG
     detail::log(ctx, Context::message_type::info, fmt, arg1, args...);
@@ -336,10 +330,8 @@ log(Context* ctx, Context::message_type level, const T& msg)
     if (not is_loggable(ctx->log_priority, level))
         return;
 
-    fmt::print(ctx->cfile_logger,
-               irr_message_style[static_cast<int>(level)],
-               "{}",
-               msg);
+    fmt::print(
+      ctx->cfile_logger, irr_message_style[static_cast<int>(level)], "{}", msg);
 }
 
 ////////////////////////////////////////////////
@@ -469,32 +461,32 @@ fail_fast(const char* type,
 } // namespace details
 } // namespace irr
 
-#define IRR_CONTRACT_FAIL(type)                                               \
-    irr::details::fail_fast(                                                  \
+#define IRR_CONTRACT_FAIL(type)                                                \
+    irr::details::fail_fast(                                                   \
       type, irr_stringify(cond), __FILE__, irr_stringify(__LINE__))
 
-#define IRR_CONTRACT_CHECK(type, cond)                                        \
-    (irr_likely(cond)                                                         \
-       ? static_cast<void>(0)                                                 \
-       : irr::details::fail_fast(                                             \
+#define IRR_CONTRACT_CHECK(type, cond)                                         \
+    (irr_likely(cond)                                                          \
+       ? static_cast<void>(0)                                                  \
+       : irr::details::fail_fast(                                              \
            type, irr_stringify(cond), __FILE__, irr_stringify(__LINE__)))
 
-#define IRR_CONTRACT_CHECK_RETURN_VAL(type, cond, val)                        \
-    do {                                                                      \
-        if (irr_unlikely(!(cond))) {                                          \
-            irr::details::print(                                              \
-              type, irr_stringify(cond), __FILE__, irr_stringify(__LINE__));  \
-            return val;                                                       \
-        }                                                                     \
+#define IRR_CONTRACT_CHECK_RETURN_VAL(type, cond, val)                         \
+    do {                                                                       \
+        if (irr_unlikely(!(cond))) {                                           \
+            irr::details::print(                                               \
+              type, irr_stringify(cond), __FILE__, irr_stringify(__LINE__));   \
+            return val;                                                        \
+        }                                                                      \
     } while (0)
 
-#define IRR_CONTRACT_CHECK_RETURN(type, cond)                                 \
-    do {                                                                      \
-        if (irr_unlikely(!(cond))) {                                          \
-            irr::details::print(                                              \
-              type, irr_stringify(cond), __FILE__, irr_stringify(__LINE__));  \
-            return;                                                           \
-        }                                                                     \
+#define IRR_CONTRACT_CHECK_RETURN(type, cond)                                  \
+    do {                                                                       \
+        if (irr_unlikely(!(cond))) {                                           \
+            irr::details::print(                                               \
+              type, irr_stringify(cond), __FILE__, irr_stringify(__LINE__));   \
+            return;                                                            \
+        }                                                                      \
     } while (0)
 
 #ifdef IRRITATOR_FULL_OPTIMIZATION
@@ -509,9 +501,8 @@ fail_fast(const char* type,
 
 #define irr_reach() IRR_CONTRACT_FAIL("Reached")
 
-#define irr_return_val_if_fail(cond, val)                                     \
+#define irr_return_val_if_fail(cond, val)                                      \
     IRR_CONTRACT_CHECK_RETURN_VAL("Precondition", cond, val)
-#define irr_return_if_fail(cond)                                              \
-    IRR_CONTRACT_CHECK_RETURN("Precondition", cond)
+#define irr_return_if_fail(cond) IRR_CONTRACT_CHECK_RETURN("Precondition", cond)
 
 #endif

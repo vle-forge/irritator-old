@@ -6,8 +6,11 @@ option(WITH_DEBUG "enable maximium debug code. [default: ON]" ON)
 option(WITH_LOG "enable log message. [default: ON]" ON)
 
 set(public_irritator_header
+ include/irritator/string.hpp
  include/irritator/data-array.hpp
- include/irritator/linker.hpp)
+ include/irritator/linker.hpp
+ include/irritator/modeling.hpp
+ include/irritator/simulation.hpp)
 
 set(private_irritator_source
   src/json
