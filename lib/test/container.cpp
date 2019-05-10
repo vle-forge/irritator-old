@@ -52,6 +52,11 @@ check_data_array()
 {
     struct position
     {
+        position() = default;
+        constexpr position(float x_)
+          : x(x_)
+        {}
+
         float x;
     };
 
@@ -115,12 +120,9 @@ check_data_array()
     is_init = array.init(3);
 
     {
-        auto& d1 = array.alloc();
-        d1.x = 1.f;
-        auto& d2 = array.alloc();
-        d2.x = 2.f;
-        auto& d3 = array.alloc();
-        d3.x = 3.f;
+        auto& d1 = array.alloc(1.f);
+        auto& d2 = array.alloc(2.f);
+        auto& d3 = array.alloc(3.f);
 
         assert(array.items);
         assert(array.max_size == 3);
@@ -314,7 +316,7 @@ check_linker()
 }
 
 int
-main(int /* argc */, char* /* argv */[])
+main(int /* argc */, char* /* argv */ [])
 {
     check_string();
     check_data_array();

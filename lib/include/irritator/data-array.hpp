@@ -544,6 +544,12 @@ struct data_array
      */
     T& alloc() noexcept;
 
+    /* alloc and construct an item from freeList or items[max_used++], sets id
+       to (next_key++ << 16) | index
+     */
+    template<typename... Args>
+    T& alloc(Args&&... args) noexcept;
+
     // puts entry on free list (uses id to store next)
     void free(T&) noexcept;
 
@@ -679,6 +685,41 @@ data_array<T, Identifier>::alloc() noexcept
     }
 
     Do_alloc<T, Identifier>(items[new_index].item, std::is_trivial<T>());
+
+#if 0
+    printf("new index: %d next key: %u and ID: %lu\n",
+           new_index,
+           next_key,
+           static_cast<long unsigned int>(
+             make_id<Identifier>(next_key, new_index)));
+#endif
+
+    items[new_index].id = make_id<Identifier>(next_key, new_index);
+    next_key = make_next_key<Identifier>(next_key);
+
+    ++max_size;
+
+    return items[new_index].item;
+}
+
+template<typename T, typename Identifier>
+template<typename... Args>
+T&
+data_array<T, Identifier>::alloc(Args&&... args) noexcept
+{
+    int new_index;
+
+    if (free_head >= 0) {
+        new_index = free_head;
+        if (valid(items[free_head].id))
+            free_head = -1;
+        else
+            free_head = get_index(items[free_head].id);
+    } else {
+        new_index = max_used++;
+    }
+
+    new (&items[new_index].item) T(std::forward<Args>(args)...);
 
 #if 0
     printf("new index: %d next key: %u and ID: %lu\n",
