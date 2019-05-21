@@ -3,10 +3,13 @@
 // http://www.boost.org/LICENSE_1_0.txt)
 
 #include <irritator/data-array.hpp>
+#include <irritator/data-list.hpp>
 #include <irritator/linker.hpp>
 #include <irritator/string.hpp>
 
 #include <string>
+
+#include <fmt/format.h>
 
 #include <cassert>
 
@@ -178,7 +181,7 @@ check_data_list()
     struct x_position
     {
         float x = { 0.f };
-        irr::ListID y = { -1 };
+        irr::ListID y;
     };
 
     struct y_position
@@ -188,11 +191,11 @@ check_data_list()
 
     irr::data_array<x_position, irr::ID> x_array;
     irr::data_array<y_position, irr::ID> y_array;
-    irr::data_list<irr::data_array<y_position, irr::ID>, irr::ListID, 3> links;
+    irr::data_list<irr::ID> links;
 
     x_array.init(10);
     y_array.init(10);
-    links.init(&y_array, 32);
+    links.init(32);
 
     auto& x1 = x_array.alloc();
     x1.x = 1.f;
@@ -208,44 +211,93 @@ check_data_list()
     auto& y3 = y_array.alloc();
     y3.y = 3.f;
 
-    links.emplace(x1.y, y_array.get_id(y1));
-    links.emplace(x1.y, y_array.get_id(y2));
-    links.emplace(x1.y, y_array.get_id(y3));
+    x1.y.push_back(links, y_array.get_id(y1));
+    x1.y.push_back(links, y_array.get_id(y2));
+    x1.y.push_back(links, y_array.get_id(y3));
 
     int size = 0;
-    for (auto it = links.begin(x1.y), et = links.end(); it != et; ++it)
-        ++size;
+    for (auto elem : x1.y(links)) {
+        size++;
+        assert(y_array.try_to_get(elem) != nullptr);
+    }
+
     assert(size == 3);
+    size = 0;
+
+    {
+        auto it = x1.y.begin(links);
+        auto et = x1.y.end(links);
+        assert(it != et);
+
+        while (it != et) {
+            ++size;
+            ++it;
+        }
+
+        assert(size == 3);
+        --it;
+        assert(et != it);
+        assert(y_array.try_to_get(*it) != nullptr);
+
+        --it;
+        assert(et != it);
+        assert(y_array.try_to_get(*it) != nullptr);
+
+        --it;
+        assert(et != it);
+        assert(y_array.try_to_get(*it) != nullptr);
+        assert(x1.y.begin(links) == it);
+    }
 
     y_array.free(y1);
-
-    size = 0;
-    for (auto it = links.begin(x1.y), et = links.end(); it != et; ++it)
-        ++size;
-
-    assert(size == 2);
-
     y_array.free(y2);
 
+    x1.y.clear(links, [&y_array](auto id) {
+        return y_array.try_to_get(id) == nullptr;
+    });
+
     size = 0;
-    for (auto it = links.begin(x1.y), et = links.end(); it != et; ++it)
-        ++size;
+    for (auto elem : x1.y(links)) {
+        size++;
+        assert(y_array.try_to_get(elem) != nullptr);
+    }
 
     assert(size == 1);
 
-    y_array.free(y3);
+    //     int size = 0;
+    // for (auto it = links.begin(x1.y), et = links.end(); it != et; ++it)
+    //     ++size;
+    // assert(size == 3);
 
-    size = 0;
-    for (auto it = links.begin(x1.y), et = links.end(); it != et; ++it)
-        ++size;
+    // y_array.free(y1);
 
-    assert(size == 0);
+    // size = 0;
+    // for (auto it = links.begin(x1.y), et = links.end(); it != et; ++it)
+    //     ++size;
 
-    size = 0;
-    for (auto it = links.begin(x1.y), et = links.end(); it != et; ++it)
-        ++size;
+    // assert(size == 2);
 
-    assert(size == 0);
+    // y_array.free(y2);
+
+    // size = 0;
+    // for (auto it = links.begin(x1.y), et = links.end(); it != et; ++it)
+    //     ++size;
+
+    // assert(size == 1);
+
+    // y_array.free(y3);
+
+    // size = 0;
+    // for (auto it = links.begin(x1.y), et = links.end(); it != et; ++it)
+    //     ++size;
+
+    // assert(size == 0);
+
+    // size = 0;
+    // for (auto it = links.begin(x1.y), et = links.end(); it != et; ++it)
+    //     ++size;
+
+    // assert(size == 0);
 }
 
 static void

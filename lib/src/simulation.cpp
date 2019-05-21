@@ -482,12 +482,16 @@ namespace irr {
 
 Model::Model(int estimated_model_number)
 {
-    named_values.init(estimated_model_number);
     conditions.init(estimated_model_number);
     connections.init(estimated_model_number * 4);
     slots.init(estimated_model_number * 4);
     views.init(estimated_model_number);
     nodes.init(estimated_model_number);
+
+    integer32s.init(estimated_model_number);
+    integer64s.init(estimated_model_number);
+    real64s.init(estimated_model_number);
+    strings.init(estimated_model_number);
 }
 
 VLE::VLE()

@@ -23,10 +23,43 @@ check_json_01()
     assert(model.version_major == 1);
     assert(model.version_minor == 2);
     assert(model.version_patch == 3);
+
+    assert(model.conditions.size() == 7);
+
+    irr::Condition* cnd = nullptr;
+    int read = 0;
+    while (model.conditions.next(cnd)) {
+        if (cnd->name == "x") {
+            assert(cnd->type == irr::Condition::condition_type::integer32);
+            ++read;
+        }
+        if (cnd->name == "y") {
+            assert(cnd->type == irr::Condition::condition_type::real64);
+            ++read;
+        }
+        if (cnd->name == "z") {
+            assert(cnd->type == irr::Condition::condition_type::integer32);
+            ++read;
+        }
+        if (cnd->name == "x2") {
+            assert(cnd->type == irr::Condition::condition_type::string);
+            ++read;
+        }
+        if (cnd->name == "y2") {
+            assert(cnd->type == irr::Condition::condition_type::string);
+            ++read;
+        }
+        if (cnd->name == "z2") {
+            assert(cnd->type == irr::Condition::condition_type::string);
+            ++read;
+        }
+    }
+
+    assert(read == 6);
 }
 
 int
-main(int /* argc */, char* /* argv */[])
+main(int /* argc */, char* /* argv */ [])
 {
     check_json_01();
 

@@ -4,17 +4,32 @@
     "version": [1, 2, 3],
 
     "conditions": [
+        {"x": 1},
+        {"y": 2.5},
+        {"z": 2},
+        { "x2": "a" },
+        { "y2": "b" },
+        { "z2": "c" },
+        {"output": "/tmp/"}
+    ]
+    ,
+    "views": [
         {
-            "Condition1": [
-                {"x": 1},
-                {"y": 2},
-                {"z": 2}
-            ],
-            "Condition2": [
-                { "x": "a" },
-                { "y": "b" },
-                { "z": "c" }
+            "view1" :
+            [
+                {"options": [ "timed" ]},
+                {"type": "csv_file"},
+                {"conditions": ["output"]}
+            ]
+        },
+        {
+            "view2" :
+            [
+                {"options": [ "alloc", "output" ]},
+                {"type": "json_file"},
+                {"conditions": ["output"]}
             ]
         }
     ]
+
 }

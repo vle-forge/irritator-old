@@ -6,6 +6,7 @@
 #define ORG_VLEPROJECT_IRRITATOR_MODELING_HPP
 
 #include <irritator/data-array.hpp>
+#include <irritator/data-list.hpp>
 #include <irritator/export.hpp>
 #include <irritator/string.hpp>
 
@@ -17,29 +18,29 @@ namespace irr {
 
 constexpr int max_name_length = 8;
 
-struct NamedValue
+struct Condition
 {
-    enum class named_value_type : int8_t
+    Condition() = default;
+
+    Condition(const char* str)
+      : value(0)
+      , type(condition_type::integer32)
+      , name(str)
+    {}
+
+    enum class condition_type : int8_t
     {
-        boolean,   // bool
         integer32, // int32_t
         integer64, // int64_t
-        real32,    // float
         real64,    // double
         string,    // std::string
         // set,       // std::vector<named_value>
         // map        // std::map<string, named_value>
     };
 
-    string<max_name_length> name;
-    ListID named_values;
-    named_value_type type = named_value_type::boolean;
-};
-
-struct Condition
-{
-    string<max_name_length> name;
-    ListID named_values = -1;
+    ID value = 0;
+    condition_type type = condition_type::integer32;
+    string<3 + 4> name;
 };
 
 // struct GuiNode
@@ -84,9 +85,15 @@ struct Dynamic
 
 struct View
 {
+    View() = default;
+
+    View(const char* str)
+      : name(str)
+    {}
+
     enum view_option : std::int8_t
     {
-        timed = 0,
+        none = 0,
         alloc = 1 << 1,
         output = 1 << 2,
         internal = 1 << 3,
@@ -97,14 +104,15 @@ struct View
 
     enum class view_type : std::int8_t
     {
-        csv,
-        json
+        csv_file,
+        json_file,
+        memory
     };
 
-    float time_step = 1.f;
-    string<1024> output_path;
-    view_option options = view_option::timed;
-    view_type type = view_type::json;
+    ListID conditions;
+    std::int8_t options = view_option::output;
+    view_type type = view_type::csv_file;
+    string<2 + 4> name;
 };
 
 struct Node
@@ -121,11 +129,11 @@ struct Node
     int output_slots_number = 0;
 
     ID dynamics = 0;
-    ListID conditions = -1;
-    ListID observables = -1;
+    ListID conditions;
+    ListID observables;
 
-    ListID children = -1;
-    ListID connections = -1;
+    ListID children;
+    ListID connections;
 
     model_type type = model_type::atomic;
 };
@@ -159,8 +167,13 @@ struct Context
     message_type log_priority = Context::message_type::info;
 };
 
-using NamedValues = data_array<NamedValue, ID>;
 using Conditions = data_array<Condition, ID>;
+
+using Integer32s = data_array<int32_t, ID>;
+using Integer64s = data_array<int64_t, ID>;
+using Real32s = data_array<float, ID>;
+using Real64s = data_array<double, ID>;
+using Strings = data_array<std::string, ID>;
 
 using Nodes = data_array<Node, ID>;
 using Connections = data_array<Connection, ID>;
@@ -181,13 +194,18 @@ struct Model
     int version_minor;
     int version_patch;
 
-    NamedValues named_values;
     Conditions conditions;
     Connections connections;
     Slots slots;
     Views views;
     Nodes nodes;
     Classes classes;
+
+    Integer32s integer32s;
+    Integer64s integer64s;
+    Real32s real32s;
+    Real64s real64s;
+    Strings strings;
 };
 
 struct VLE
