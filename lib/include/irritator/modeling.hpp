@@ -182,11 +182,19 @@ using Views = data_array<View, ID>;
 using Dynamics = data_array<Dynamic, ID>;
 using Classes = data_array<Class, ID>;
 
+enum class status
+{
+    json_read_success,
+    json_open_error,
+    json_parse_error,
+    json_stack_not_empty_error
+};
+
 struct Model
 {
     Model(int estimated_model_number = 4096);
 
-    void read(Context& context, const std::filesystem::path& file_name);
+    status read(Context& context, const std::filesystem::path& file_name);
 
     string<32> name;
     string<32> author;
@@ -200,6 +208,9 @@ struct Model
     Views views;
     Nodes nodes;
     Classes classes;
+
+    data_list<ID> links;
+    data_list<WID> wlinks;
 
     Integer32s integer32s;
     Integer64s integer64s;

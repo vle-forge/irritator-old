@@ -16,6 +16,7 @@ set_property(TARGET threads PROPERTY
 add_definitions(-DFMT_HEADER_ONLY)
 include_directories(${CMAKE_SOURCE_DIR}/external/fmt/include)
 include_directories(${CMAKE_SOURCE_DIR}/external/rapidjson/include)
+include_directories(${CMAKE_SOURCE_DIR}/external/Catch2/single_include/catch2)
 
 enable_testing()
 add_subdirectory(lib)

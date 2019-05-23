@@ -131,6 +131,5 @@ function(irritator_add_test test_name)
 endfunction()
 
 if (NOT BUILD_SHARED_LIBS)
-  irritator_add_test(test-container test/container.cpp)
-  irritator_add_test(test-json test/json.cpp)
+  irritator_add_test(test-cpp test/container.cpp test/main.cpp test/json.cpp)
 endif ()

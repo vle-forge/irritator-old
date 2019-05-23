@@ -488,6 +488,9 @@ Model::Model(int estimated_model_number)
     views.init(estimated_model_number);
     nodes.init(estimated_model_number);
 
+    links.init(estimated_model_number * 1024);
+    wlinks.init(estimated_model_number * 1024);
+
     integer32s.init(estimated_model_number);
     integer64s.init(estimated_model_number);
     real64s.init(estimated_model_number);
