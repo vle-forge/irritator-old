@@ -13,8 +13,6 @@
 
 #include <iostream>
 
-static constexpr std::int8_t irr_element_size = 18;
-
 enum class irr_element : std::int8_t
 {
     none,
@@ -22,41 +20,31 @@ enum class irr_element : std::int8_t
     project_name,
     project_author,
     project_version,
-    project_version_array,
     conditions,
-    conditions_array,
-    conditions_array_object,
+    conditions_object,
     views,
-    views_array,
-    views_array_object,
-    views_array_object_array,
-    views_array_object_array_options,
-    views_array_object_array_options_array,
-    views_array_object_array_type,
-    views_array_object_array_conditions,
-    views_array_object_array_conditions_array
+    views_object,
+    views_object_parameters,
+    views_object_parameters_options,
+    views_object_parameters_type,
+    views_object_parameters_conditions,
+    COUNT
 };
 
-static constexpr std::string_view irr_element_name[irr_element_size] = {
-    "none",
-    "project",
-    "project_name",
-    "project_author",
-    "project_version",
-    "project_version_array",
-    "conditions",
-    "conditions_array",
-    "conditions_array_object",
-    "views",
-    "views_array",
-    "views_array_object",
-    "views_array_object_array",
-    "views_array_object_array_options",
-    "views_array_object_array_options_array",
-    "views_array_object_array_type",
-    "views_array_object_array_conditions",
-    "views_array_object_array_conditions_array"
-};
+static constexpr std::string_view irr_element_name[static_cast<std::int8_t>(
+  irr_element::COUNT)] = { "none",
+                           "project",
+                           "project_name",
+                           "project_author",
+                           "project_version",
+                           "conditions",
+                           "conditions_object",
+                           "views",
+                           "views_object",
+                           "views_object_parameters",
+                           "views_object_parameters_options",
+                           "views_object_parameters_type",
+                           "views_object_parameters_conditions" };
 
 struct irr_stack_element
 {
@@ -84,7 +72,9 @@ struct irr_stack_element
         const auto index =
           static_cast<std::underlying_type<irr_element>::type>(elem.element);
 
-        assert(index > 0 && index < irr_element_size);
+        assert(index > 0 &&
+               index < static_cast<std::underlying_type<irr_element>::type>(
+                         irr_element::COUNT));
 
         return os << "[" << irr_element_name[index] << "]";
     }
@@ -95,7 +85,7 @@ struct irr_json_stack
     std::vector<irr_stack_element> stack;
 
     friend std::ostream& operator<<(std::ostream& os,
-                                    const irr_json_stack& stack)
+                                    const irr_json_stack& stack) noexcept
     {
         std::copy(stack.stack.rbegin(),
                   stack.stack.rend(),
@@ -144,8 +134,6 @@ struct irr_json_stack
         auto ret = top();
         stack.pop_back();
 
-        // std::cout << "popped stack: " << *this << '\n';
-
         return ret;
     }
 };
@@ -157,7 +145,7 @@ struct irr_json_handler
     irr::Model& model;
     irr::Context& context;
 
-    void indent() const
+    void indent() noexcept
     {
         fmt::print("{:>{}}", "", stack.size());
     }
@@ -171,6 +159,7 @@ struct irr_json_handler
     {
         indent();
         std::cout << "Null()" << std::endl;
+        stack.pop();
         return true;
     }
 
@@ -179,7 +168,7 @@ struct irr_json_handler
         indent();
         std::cout << "Bool(" << std::boolalpha << b << ")" << std::endl;
 
-        if (stack.top().is(irr_element::conditions_array_object)) {
+        if (stack.top().is(irr_element::conditions_object)) {
             auto* cnd = model.conditions.try_to_get(stack.top().id);
             auto& value = model.integer32s.alloc(b ? 1 : 0);
             cnd->value = model.integer32s.get_id(value);
@@ -194,7 +183,7 @@ struct irr_json_handler
         indent();
         std::cout << "Int(" << i << ")" << std::endl;
 
-        if (stack.top().is(irr_element::conditions_array_object)) {
+        if (stack.top().is(irr_element::conditions_object)) {
             auto* cnd = model.conditions.try_to_get(stack.top().id);
             auto& value = model.integer32s.alloc(i);
             cnd->value = model.integer32s.get_id(value);
@@ -209,14 +198,14 @@ struct irr_json_handler
         indent();
         std::cout << "Uint(" << u << ")" << std::endl;
 
-        if (stack.top().is(irr_element::project_version_array)) {
+        if (stack.top().is(irr_element::project_version)) {
             if (model.version_major < 0)
                 model.version_major = static_cast<int>(u);
             else if (model.version_minor < 0)
                 model.version_minor = static_cast<int>(u);
             else if (model.version_patch < 0)
                 model.version_patch = static_cast<int>(u);
-        } else if (stack.top().is(irr_element::conditions_array_object)) {
+        } else if (stack.top().is(irr_element::conditions_object)) {
             auto* cnd = model.conditions.try_to_get(stack.top().id);
             auto& value = model.integer32s.alloc(u);
             cnd->value = model.integer32s.get_id(value);
@@ -231,7 +220,7 @@ struct irr_json_handler
         indent();
         std::cout << "Int64(" << i << ")" << std::endl;
 
-        if (stack.top().is(irr_element::conditions_array_object)) {
+        if (stack.top().is(irr_element::conditions_object)) {
             auto* cnd = model.conditions.try_to_get(stack.top().id);
             auto& value = model.integer64s.alloc(i);
             cnd->value = model.integer64s.get_id(value);
@@ -246,7 +235,7 @@ struct irr_json_handler
         indent();
         std::cout << "Uint64(" << u << ")" << std::endl;
 
-        if (stack.top().is(irr_element::conditions_array_object)) {
+        if (stack.top().is(irr_element::conditions_object)) {
             auto* cnd = model.conditions.try_to_get(stack.top().id);
             auto& value = model.integer64s.alloc(u);
             cnd->value = model.integer64s.get_id(value);
@@ -261,7 +250,7 @@ struct irr_json_handler
         indent();
         std::cout << "Double(" << d << ")" << std::endl;
 
-        if (stack.top().is(irr_element::conditions_array_object)) {
+        if (stack.top().is(irr_element::conditions_object)) {
             auto* cnd = model.conditions.try_to_get(stack.top().id);
             auto& value = model.real64s.alloc(d);
             cnd->value = model.real64s.get_id(value);
@@ -289,17 +278,18 @@ struct irr_json_handler
 
         if (elem.element == irr_element::project_name) {
             model.name = str;
+            stack.pop();
         } else if (elem.element == irr_element::project_author) {
             model.author = str;
-        } else if (stack.top().is(irr_element::conditions_array_object)) {
+            stack.pop();
+        } else if (stack.top().is(irr_element::conditions_object)) {
             auto* cnd = model.conditions.try_to_get(stack.top().id);
             auto& value = model.strings.alloc(str, length);
             cnd->value = model.strings.get_id(value);
             cnd->type = irr::Condition::condition_type::string;
         } else if (stack.top().is(
-                     irr_element::views_array_object_array_options_array)) {
+                     irr_element::views_object_parameters_options)) {
             auto* view = model.views.try_to_get(stack.top().id);
-
             if (!strncmp(str, "alloc", length))
                 view->options |= irr::View::view_option::alloc;
             else if (!strncmp(str, "output", length))
@@ -312,8 +302,7 @@ struct irr_json_handler
                 view->options |= irr::View::view_option::confluent;
             else if (!strncmp(str, "finish", length))
                 view->options |= irr::View::view_option::finish;
-        } else if (stack.top().is(
-                     irr_element::views_array_object_array_type)) {
+        } else if (stack.top().is(irr_element::views_object_parameters_type)) {
             auto* view = model.views.try_to_get(stack.top().id);
             if (!strncmp(str, "csv_file", length))
                 view->type = irr::View::view_type::csv_file;
@@ -322,7 +311,7 @@ struct irr_json_handler
             else if (!strncmp(str, "memory", length))
                 view->type = irr::View::view_type::memory;
         } else if (stack.top().is(
-                     irr_element::views_array_object_array_conditions_array)) {
+                     irr_element::views_object_parameters_conditions)) {
             auto* view = model.views.try_to_get(stack.top().id);
             irr::Condition* cnd = nullptr;
 
@@ -362,25 +351,27 @@ struct irr_json_handler
                 stack.emplace(irr_element::conditions);
             else if (!strncmp(str, "views", length))
                 stack.emplace(irr_element::views);
-        } else if (stack.top().is(irr_element::conditions_array_object)) {
+        } else if (stack.top().is(irr_element::conditions_object)) {
             auto& condition = model.conditions.alloc(str);
             auto id = model.conditions.get_id(condition);
-            std::cout << "read condition " << condition.name.data() << '\n';
+            std::cout << "** new condition " << condition.name.data() << '\n';
             stack.top().id = id;
-        } else if (stack.top().is(irr_element::views_array_object)) {
+        } else if (stack.top().is(irr_element::views_object)) {
             auto& view = model.views.alloc(str);
             auto id = model.views.get_id(view);
-            std::cout << "read view " << view.name.data() << '\n';
+            std::cout << "** new view " << view.name.data() << ' ' << id
+                      << '\n';
             stack.top().id = id;
-        } else if (stack.top().is(irr_element::views_array_object_array)) {
+            stack.emplace(irr_element::views_object_parameters, id);
+        } else if (stack.top().is(irr_element::views_object_parameters)) {
             if (!strncmp(str, "options", length)) {
-                stack.emplace(irr_element::views_array_object_array_options,
+                stack.emplace(irr_element::views_object_parameters_options,
                               stack.top().id);
             } else if (!strncmp(str, "type", length)) {
-                stack.emplace(irr_element::views_array_object_array_type,
+                stack.emplace(irr_element::views_object_parameters_type,
                               stack.top().id);
             } else if (!strncmp(str, "conditions", length)) {
-                stack.emplace(irr_element::views_array_object_array_conditions,
+                stack.emplace(irr_element::views_object_parameters_conditions,
                               stack.top().id);
             }
         }
@@ -395,10 +386,10 @@ struct irr_json_handler
 
         if (stack.empty()) {
             stack.emplace(irr_element::project);
-        } else if (stack.top().is(irr_element::conditions_array)) {
-            stack.emplace(irr_element::conditions_array_object);
-        } else if (stack.top().is(irr_element::views_array)) {
-            stack.emplace(irr_element::views_array_object);
+        } else if (stack.top().is(irr_element::conditions)) {
+            stack.emplace(irr_element::conditions_object);
+        } else if (stack.top().is(irr_element::views)) {
+            stack.emplace(irr_element::views_object);
         }
 
         return true;
@@ -407,10 +398,10 @@ struct irr_json_handler
     bool EndObject(rapidjson::SizeType memberCount)
     {
         indent();
-        std::cout << "EndObject(" << memberCount << ") "
-                  << "Pop: " << stack << std::endl;
+        std::cout << "EndObject(" << memberCount << ") ";
 
-        stack.pop();
+        std::cout << "Pop: " << stack.pop();
+        std::cout << " stack: " << stack << "\n";
 
         return true;
     }
@@ -421,26 +412,9 @@ struct irr_json_handler
         std::cout << "StartArray()" << stack << std::endl;
 
         if (stack.top().is(irr_element::project_version)) {
-            stack.emplace(irr_element::project_version_array);
             model.version_major = -1;
             model.version_minor = -1;
             model.version_patch = -1;
-        } else if (stack.top().is(irr_element::conditions)) {
-            stack.emplace(irr_element::conditions_array);
-        } else if (stack.top().is(irr_element::views)) {
-            stack.emplace(irr_element::views_array);
-        } else if (stack.top().is(irr_element::views_array_object)) {
-            stack.emplace(irr_element::views_array_object_array,
-                          stack.top().id);
-        } else if (stack.top().is(
-                     irr_element::views_array_object_array_options)) {
-            stack.emplace(irr_element::views_array_object_array_options_array,
-                          stack.top().id);
-        } else if (stack.top().is(
-                     irr_element::views_array_object_array_conditions)) {
-            stack.emplace(
-              irr_element::views_array_object_array_conditions_array,
-              stack.top().id);
         }
 
         return true;
@@ -449,30 +423,25 @@ struct irr_json_handler
     bool EndArray(rapidjson::SizeType elementCount)
     {
         indent();
-        std::cout << "EndArray(" << elementCount << ") "
-                  << "Pop: " << stack << std::endl;
 
-        // switch (stack.top().element) {
-        // case irr_element::project_version_array:
-        // case irr_element::conditions_array:
-        // case irr_element::views_array:
-        // case irr_element::views_array_object_array:
-        stack.pop();
-        // default:
-        //     break;
+        std::cout << "EndArray(" << elementCount << ") ";
+
+        switch (stack.top().element) {
+        case irr_element::views_object:
+        case irr_element::views_object_parameters_options:
+        case irr_element::views_object_parameters_conditions:
+            std::cout << "\n";
+            break;
+        default:
+            std::cout << "Pop: " << stack.pop();
+            std::cout << " stack: " << stack << "\n";
+        }
+
+        // if (!(stack.top().is(irr_element::views_object) ||
+        //       stack.top().is(irr_element::views))) {
+        //     std::cout << "Pop: " << stack.pop();
+        //     std::cout << " stack: " << stack << "\n";
         // }
-
-        // stack.pop();
-
-        // if (stack.top().is(irr_element::project_version) ||
-        //     stack.top().is(irr_element::conditions) ||
-        //     stack.top().is(irr_element::views_array_object_array) ||
-        //     stack.top().is(irr_element::views) ||
-        //     stack.top().is(irr_element::views_array_object_array_options) ||
-        //     stack.top().is(irr_element::views_array_object_array_conditions))
-        //     stack.pop();
-        // else
-        //     assert(false);
 
         return true;
     }
