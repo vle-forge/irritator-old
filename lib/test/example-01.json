@@ -1,34 +1,29 @@
 {
     "name": "name",
     "author": "me",
-    "version": [1, 2, 3]
-    ,
-    "conditions": [
-        {"x": 1},
-        {"y": 2.5},
-        {"z": 2},
-        { "x2": "a" },
-        { "y2": "b" },
-        { "z2": "c" },
-        {"output": "/tmp/"}
-    ]
+    "version": [1, 2, 3],
+    "conditions": {
+        "x": 1,
+        "y": 2.5,
+        "z": 2,
+        "x2": "a" ,
+        "y2": "b" ,
+        "z2": "c" ,
+        "output": "/tmp/"
+    }
     ,
     "views": [
         {
-            "view1" :
-            [
-                {"options": [ "timed" ]},
-                {"type": "csv_file"},
-                {"conditions": ["output"]}
-            ]
+            "name": "view1",
+            "options": [ "timed" ],
+            "type": "csv_file",
+            "conditions": ["output"]
         },
         {
-            "view2" :
-            [
-                {"options": [ "alloc", "output" ]},
-                {"type": "json_file"},
-                {"conditions": ["output2"]}
-            ]
+            "name": "view2",
+            "options": [ "alloc", "output" ],
+            "type": "json_file",
+            "conditions": ["output2"]
         }
     ]
 }

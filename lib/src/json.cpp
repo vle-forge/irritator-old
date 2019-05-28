@@ -24,7 +24,7 @@ enum class irr_element : std::int8_t
     conditions_object,
     views,
     views_object,
-    views_object_parameters,
+    views_object_parameters_name,
     views_object_parameters_options,
     views_object_parameters_type,
     views_object_parameters_conditions,
@@ -41,7 +41,7 @@ static constexpr std::string_view irr_element_name[static_cast<std::int8_t>(
                            "conditions_object",
                            "views",
                            "views_object",
-                           "views_object_parameters",
+                           "views_object_parameters_name",
                            "views_object_parameters_options",
                            "views_object_parameters_type",
                            "views_object_parameters_conditions" };
@@ -302,6 +302,9 @@ struct irr_json_handler
                 view->options |= irr::View::view_option::confluent;
             else if (!strncmp(str, "finish", length))
                 view->options |= irr::View::view_option::finish;
+        } else if (stack.top().is(irr_element::views_object_parameters_name)) {
+            auto* view = model.views.try_to_get(stack.top().id);
+            view->name = str;
         } else if (stack.top().is(irr_element::views_object_parameters_type)) {
             auto* view = model.views.try_to_get(stack.top().id);
             if (!strncmp(str, "csv_file", length))
@@ -357,14 +360,10 @@ struct irr_json_handler
             std::cout << "** new condition " << condition.name.data() << '\n';
             stack.top().id = id;
         } else if (stack.top().is(irr_element::views_object)) {
-            auto& view = model.views.alloc(str);
-            auto id = model.views.get_id(view);
-            std::cout << "** new view " << view.name.data() << ' ' << id
-                      << '\n';
-            stack.top().id = id;
-            stack.emplace(irr_element::views_object_parameters, id);
-        } else if (stack.top().is(irr_element::views_object_parameters)) {
-            if (!strncmp(str, "options", length)) {
+            if (!strncmp(str, "name", length)) {
+                stack.emplace(irr_element::views_object_parameters_name,
+                              stack.top().id);
+            } else if (!strncmp(str, "options", length)) {
                 stack.emplace(irr_element::views_object_parameters_options,
                               stack.top().id);
             } else if (!strncmp(str, "type", length)) {
@@ -389,7 +388,12 @@ struct irr_json_handler
         } else if (stack.top().is(irr_element::conditions)) {
             stack.emplace(irr_element::conditions_object);
         } else if (stack.top().is(irr_element::views)) {
-            stack.emplace(irr_element::views_object);
+            auto& view = model.views.alloc();
+            auto id = model.views.get_id(view);
+            std::cout << "** new view " << view.name.data() << ' ' << id
+                      << '\n';
+            stack.top().id = id;
+            stack.emplace(irr_element::views_object, id);
         }
 
         return true;
@@ -398,8 +402,14 @@ struct irr_json_handler
     bool EndObject(rapidjson::SizeType memberCount)
     {
         indent();
-        std::cout << "EndObject(" << memberCount << ") ";
 
+        if (stack.top().element == irr_element::conditions_object) {
+            std::cout << "EndObject(" << memberCount << ") ";
+            std::cout << "Pop: " << stack.pop();
+            std::cout << " stack: " << stack << "\n";
+        }
+
+        std::cout << "EndObject(" << memberCount << ") ";
         std::cout << "Pop: " << stack.pop();
         std::cout << " stack: " << stack << "\n";
 
