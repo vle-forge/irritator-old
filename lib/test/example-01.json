@@ -3,6 +3,8 @@
     "author": "me",
     "version": [1, 2, 3],
     "conditions": {
+        "start": 0,
+        "duration": 100,
         "x": 1,
         "y": 2.5,
         "z": 2,
@@ -36,6 +38,63 @@
             "name": "dyn2",
             "package": "default",
             "library": "generator"
+        }
+    ],
+    "classes": [
+        {
+            "name": "Atomic1",
+            "type": "atomic",
+            "dynamics": "dyn1",
+            "conditions": ["c1", "c2", "c3"],
+            "observables": ["obs1", "obs2"],
+            "inputs": ["in1", "in2"],
+            "outputs": ["out"],
+            "x": 1.321,
+            "y": 123.1,
+        },
+        {
+            "name": "Coupled1",
+            "type": "coupled",
+            "inputs": ["in",],
+            "outputs": ["out"],
+            "children": [
+                {
+                    "name": "a1",
+                    "type": "atomic",
+                    "outputs": ["out"]
+                },
+                {
+                    "name": "a2",
+                    "type": "atomic",
+                    "inputs": ["in"]
+                },
+                {
+                    "name": "a2",
+                    "type": "class"
+                }
+            ],
+            "connections": [
+                {
+                    "from": "a2",
+                    "from_slot": "out",
+                    "to": "a1",
+                    "to_slot": "in"
+                },
+            ]
+        }
+    ],
+    "experiment": [
+        {
+            "name": "first",
+            "model": "Coupled1",
+            "start": 0,
+            "duration": 100,
+        },
+        {
+            "name": "second",
+            "model": "Atomic1",
+            "start": 0,
+            "duration": 100,
         }
     ]
 }

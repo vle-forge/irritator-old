@@ -33,6 +33,22 @@ enum class irr_element : std::int8_t
     dynamics_object_name,
     dynamics_object_package,
     dynamics_object_library,
+    classes,
+    classes_object,
+    classes_object_name,
+    classes_object_type,
+    classes_object_dynamics,
+    classes_object_conditions,
+    classes_object_observables,
+    classes_object_inputs,
+    classes_object_outputs,
+    classes_object_chidren,
+    classes_object_connections,
+    classes_object_connections_object,
+    classes_object_connections_object_from,
+    classes_object_connections_object_from_slot,
+    classes_object_connections_object_to,
+    classes_object_connections_object_to_slot,
     COUNT
 };
 
@@ -54,7 +70,22 @@ static constexpr std::string_view irr_element_name[static_cast<std::int8_t>(
                            "dynamics_object",
                            "dynamics_object_name",
                            "dynamics_object_package",
-                           "dynamics_object_library" };
+                           "dynamics_object_library",
+                           "classes",
+                           "classes_object",
+                           "classes_object_name",
+                           "classes_object_dynamics",
+                           "classes_object_conditions",
+                           "classes_object_observables",
+                           "classes_object_inputs",
+                           "classes_object_outputs",
+                           "classes_object_chidren",
+                           "classes_object_connections",
+                           "classes_object_connections_object",
+                           "classes_object_connections_object_from",
+                           "classes_object_connections_object_from_slot",
+                           "classes_object_connections_object_to",
+                           "classes_object_connections_object_to_slot" };
 
 struct irr_stack_element
 {
