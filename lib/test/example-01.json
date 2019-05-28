@@ -25,5 +25,17 @@
             "type": "json_file",
             "conditions": ["output2"]
         }
+    ],
+    "dynamics": [
+        {
+            "name": "dyn1",
+            "package": "default",
+            "library": "counter"
+        },
+        {
+            "name": "dyn2",
+            "package": "default",
+            "library": "generator"
+        }
     ]
 }

@@ -77,10 +77,10 @@ struct Slot
 
 struct Dynamic
 {
-    ID name;
+    string<8> name;
 
-    string<128> package_name;
-    string<128> library_name;
+    string<1024> package;
+    string<1024> library;
 };
 
 struct View
@@ -208,6 +208,7 @@ struct Model
     Views views;
     Nodes nodes;
     Classes classes;
+    Dynamics dynamics;
 
     data_list<ID> links;
     data_list<WID> wlinks;

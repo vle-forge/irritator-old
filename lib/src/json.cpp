@@ -24,10 +24,15 @@ enum class irr_element : std::int8_t
     conditions_object,
     views,
     views_object,
-    views_object_parameters_name,
-    views_object_parameters_options,
-    views_object_parameters_type,
-    views_object_parameters_conditions,
+    views_object_name,
+    views_object_options,
+    views_object_type,
+    views_object_conditions,
+    dynamics,
+    dynamics_object,
+    dynamics_object_name,
+    dynamics_object_package,
+    dynamics_object_library,
     COUNT
 };
 
@@ -41,10 +46,15 @@ static constexpr std::string_view irr_element_name[static_cast<std::int8_t>(
                            "conditions_object",
                            "views",
                            "views_object",
-                           "views_object_parameters_name",
-                           "views_object_parameters_options",
-                           "views_object_parameters_type",
-                           "views_object_parameters_conditions" };
+                           "views_object_name",
+                           "views_object_options",
+                           "views_object_type",
+                           "views_object_conditions",
+                           "dynamics",
+                           "dynamics_object",
+                           "dynamics_object_name",
+                           "dynamics_object_package",
+                           "dynamics_object_library" };
 
 struct irr_stack_element
 {
@@ -287,8 +297,7 @@ struct irr_json_handler
             auto& value = model.strings.alloc(str, length);
             cnd->value = model.strings.get_id(value);
             cnd->type = irr::Condition::condition_type::string;
-        } else if (stack.top().is(
-                     irr_element::views_object_parameters_options)) {
+        } else if (stack.top().is(irr_element::views_object_options)) {
             auto* view = model.views.try_to_get(stack.top().id);
             if (!strncmp(str, "alloc", length))
                 view->options |= irr::View::view_option::alloc;
@@ -302,10 +311,12 @@ struct irr_json_handler
                 view->options |= irr::View::view_option::confluent;
             else if (!strncmp(str, "finish", length))
                 view->options |= irr::View::view_option::finish;
-        } else if (stack.top().is(irr_element::views_object_parameters_name)) {
+        } else if (stack.top().is(irr_element::views_object_name)) {
             auto* view = model.views.try_to_get(stack.top().id);
             view->name = str;
-        } else if (stack.top().is(irr_element::views_object_parameters_type)) {
+            std::cout << "read view name " << str << '\n';
+            stack.pop();
+        } else if (stack.top().is(irr_element::views_object_type)) {
             auto* view = model.views.try_to_get(stack.top().id);
             if (!strncmp(str, "csv_file", length))
                 view->type = irr::View::view_type::csv_file;
@@ -313,8 +324,8 @@ struct irr_json_handler
                 view->type = irr::View::view_type::json_file;
             else if (!strncmp(str, "memory", length))
                 view->type = irr::View::view_type::memory;
-        } else if (stack.top().is(
-                     irr_element::views_object_parameters_conditions)) {
+            stack.pop();
+        } else if (stack.top().is(irr_element::views_object_conditions)) {
             auto* view = model.views.try_to_get(stack.top().id);
             irr::Condition* cnd = nullptr;
 
@@ -332,6 +343,18 @@ struct irr_json_handler
                 auto id = model.conditions.get_id(condition);
                 view->conditions.push_back(model.links, id);
             }
+        } else if (stack.top().is(irr_element::dynamics_object_name)) {
+            auto* dyn = model.dynamics.try_to_get(stack.top().id);
+            dyn->name = str;
+            stack.pop();
+        } else if (stack.top().is(irr_element::dynamics_object_package)) {
+            auto* dyn = model.dynamics.try_to_get(stack.top().id);
+            dyn->package = str;
+            stack.pop();
+        } else if (stack.top().is(irr_element::dynamics_object_library)) {
+            auto* dyn = model.dynamics.try_to_get(stack.top().id);
+            dyn->library = str;
+            stack.pop();
         }
 
         return true;
@@ -354,6 +377,8 @@ struct irr_json_handler
                 stack.emplace(irr_element::conditions);
             else if (!strncmp(str, "views", length))
                 stack.emplace(irr_element::views);
+            else if (!strncmp(str, "dynamics", length))
+                stack.emplace(irr_element::dynamics);
         } else if (stack.top().is(irr_element::conditions_object)) {
             auto& condition = model.conditions.alloc(str);
             auto id = model.conditions.get_id(condition);
@@ -361,16 +386,25 @@ struct irr_json_handler
             stack.top().id = id;
         } else if (stack.top().is(irr_element::views_object)) {
             if (!strncmp(str, "name", length)) {
-                stack.emplace(irr_element::views_object_parameters_name,
-                              stack.top().id);
+                stack.emplace(irr_element::views_object_name, stack.top().id);
             } else if (!strncmp(str, "options", length)) {
-                stack.emplace(irr_element::views_object_parameters_options,
+                stack.emplace(irr_element::views_object_options,
                               stack.top().id);
             } else if (!strncmp(str, "type", length)) {
-                stack.emplace(irr_element::views_object_parameters_type,
-                              stack.top().id);
+                stack.emplace(irr_element::views_object_type, stack.top().id);
             } else if (!strncmp(str, "conditions", length)) {
-                stack.emplace(irr_element::views_object_parameters_conditions,
+                stack.emplace(irr_element::views_object_conditions,
+                              stack.top().id);
+            }
+        } else if (stack.top().is(irr_element::dynamics_object)) {
+            if (!strncmp(str, "name", length)) {
+                stack.emplace(irr_element::dynamics_object_name,
+                              stack.top().id);
+            } else if (!strncmp(str, "package", length)) {
+                stack.emplace(irr_element::dynamics_object_package,
+                              stack.top().id);
+            } else if (!strncmp(str, "library", length)) {
+                stack.emplace(irr_element::dynamics_object_library,
                               stack.top().id);
             }
         }
@@ -390,10 +424,15 @@ struct irr_json_handler
         } else if (stack.top().is(irr_element::views)) {
             auto& view = model.views.alloc();
             auto id = model.views.get_id(view);
-            std::cout << "** new view " << view.name.data() << ' ' << id
-                      << '\n';
+            std::cout << "** new view " << view.name.data() << '\n';
             stack.top().id = id;
             stack.emplace(irr_element::views_object, id);
+        } else if (stack.top().is(irr_element::dynamics)) {
+            auto& dyn = model.dynamics.alloc();
+            auto id = model.dynamics.get_id(dyn);
+            std::cout << "** new dynamic " << id << '\n';
+            stack.top().id = id;
+            stack.emplace(irr_element::dynamics_object, id);
         }
 
         return true;
@@ -438,8 +477,8 @@ struct irr_json_handler
 
         switch (stack.top().element) {
         case irr_element::views_object:
-        case irr_element::views_object_parameters_options:
-        case irr_element::views_object_parameters_conditions:
+            // case irr_element::views_object_options:
+            // case irr_element::views_object_conditions:
             std::cout << "\n";
             break;
         default:
